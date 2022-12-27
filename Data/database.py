@@ -161,6 +161,13 @@ class BancodeDados:
                 values(?,?,?);
             """,(self.__getnewID("rua","idRua"),nomeRua,zelador,)
         )
+    
+    def buscarDizimista(self,nomeDizimista:str)->list:
+        return self.cmd.execute(
+            """
+                SELECT * from dizimista where nome = ?;
+            """,(nomeDizimista,)
+        ).fetchall()
 
     def ruasDisponiveis(self)->list:
         return transform(self.cmd.execute(
@@ -169,7 +176,7 @@ class BancodeDados:
             """
         ).fetchall())
 
-    def buscarDizimista(self,nome:str,rua:str,nCasa:str)->tuple:
+    def getDizimista(self,nome:str,rua:str,nCasa:str)->tuple:
         try:
             return self.cmd.execute(
                 """
@@ -230,3 +237,9 @@ class BancodeDados:
             return False
         except Exception:
             return False
+
+
+teste = BancodeDados("Teste")
+teste.criar()
+teste.inserirDizimista("Pedro",186,"18/12/2000","Luiz Murat")
+print(teste.buscarDizimista("Pedro"))
