@@ -242,4 +242,4 @@ class BancodeDados:
 teste = BancodeDados("Teste")
 teste.criar()
 teste.inserirDizimista("Pedro",186,"18/12/2000","Luiz Murat")
-print(teste.buscarDizimista("Pedro"))
+print(teste.getDizimista("Pedro","Luiz Murat","186"))
