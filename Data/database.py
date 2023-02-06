@@ -1,6 +1,6 @@
 import sqlite3
 import numpy as np
-from user import User
+from Data.user import User
 # consulta = http://pythonclub.com.br/gerenciando-banco-dados-sqlite3-python-parte1.html
 # Dados = https://docs.google.com/spreadsheets/d/1_HBwd5AdT7gH_P5IoNFRyOkfJZmTLLPD/edit#gid=11936601
 
@@ -271,14 +271,13 @@ class BancodeDados_cadastro:
                     login varchar(100),
                     senha varchar(100),
                     nome varchar(100) not null,
-                    email varchar(100),
                     nomeComunidade varchar(100)
                 );
             """
         )
         self.conn.commit()
 
-    def inserirCadastro(self,login:str,senha:str,nome:str,email:str,nomeComunidade:str)->bool:
+    def inserirCadastro(self,login:str,senha:str,nome:str,nomeComunidade:str)->bool:
         cadastros = transform(self.cmd.execute(
             """
                 SELECT login from cadastro where login = ?;
@@ -287,9 +286,9 @@ class BancodeDados_cadastro:
         if login not in cadastros:
             self.cmd.execute(
                 """
-                    INSERT INTO cadastro (login,senha,nome,email,nomeComunidade)
-                    values(?,?,?,?,?);
-                """,(login,senha,nome,email,nomeComunidade,)
+                    INSERT INTO cadastro (login,senha,nome,nomeComunidade)
+                    values(?,?,?,?);
+                """,(login,senha,nome,nomeComunidade,)
             )
             self.conn.commit()
             return True
@@ -298,7 +297,7 @@ class BancodeDados_cadastro:
     def login(self,login:str,senha:str)->User:
         info =  self.cmd.execute(
             """
-                SELECT nome,email,nomeComunidade from cadastro where
+                SELECT nome,nomeComunidade from cadastro where
                 login = ? and senha = ?;
             """,(login,senha,)
         ).fetchall()

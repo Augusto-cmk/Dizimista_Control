@@ -1,9 +1,8 @@
-from data import getData,getHora
+from Data.data import getData,getHora
 class User:
-    def __init__(self,nome=None,nomeComunidade=None,email=None):
+    def __init__(self,nome=None,nomeComunidade=None):
         self.nome = nome
         self.comunidade = nomeComunidade
-        self.email = email
         self.horaLogin = getHora()
         self.dataLogin = getData()
     
@@ -26,6 +25,3 @@ class User:
 
     def getComunidade(self):
         return self.comunidade
-
-    def getEmail(self):
-        return self.email

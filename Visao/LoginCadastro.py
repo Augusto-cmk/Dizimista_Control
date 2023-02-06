@@ -15,6 +15,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.graphics import Rectangle,Color
 from kivy.uix.gridlayout import GridLayout
 from Data.data import getData,getHora,getMes
+from Data.database import BancodeDados_cadastro
 
 
 class Fundo(Widget):
@@ -31,21 +32,16 @@ class Fundo(Widget):
 class TelaLogin(Screen):
     def __init__(self,mensagem=None, **kw):
         super().__init__(**kw)
+
+        self.db = BancodeDados_cadastro()
+        self.db.criar()
+
         self.user = None
 
         self.rl = RelativeLayout(size=(300, 300))
 
 
-        self.flagSalvarCredenciais = True
-
         self.mensagemError = Mensagem(error=True)
-
-        labelLembrar = Label(color='black',size_hint=(.2, .05),
-                                pos_hint={'center_x': .50, 'center_y': .36}, text='Salvar credenciais')
-
-        lembrarCadastro = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .59, 'center_y': .36},active=True)
-
-        lembrarCadastro.bind(active=self.lembrarCadastro)
 
         exibirsenha = CheckBox(color='black',size_hint=(.01, .01), pos_hint={'center_x': .62, 'center_y': .42})
 
@@ -76,21 +72,14 @@ class TelaLogin(Screen):
                                     pos_hint={'center_x': .48, 'center_y': .3},
                                     text="Novo Cadastro", on_press=self.criarCadastro)
 
-        esqueceuSenha = Button(size_hint=(.19, .05),
-                        pos_hint={'center_x': .66, 'center_y': .3},
-                        text="Esqueci minha senha", on_press=self.enviarEmailComSenha)
-
         self.mensagemSucesso = mensagem
 
         if mensagem != None:
             self.rl.add_widget(self.mensagemSucesso)
 
         self.rl.add_widget(imagem)
-        self.rl.add_widget(esqueceuSenha)
         self.rl.add_widget(labelExibirSenha)
         self.rl.add_widget(exibirsenha)
-        self.rl.add_widget(labelLembrar)
-        self.rl.add_widget(lembrarCadastro)
         self.rl.add_widget(criarNovoCadastro)
         self.rl.add_widget(labelSenha)
         self.rl.add_widget(labelLogin)
@@ -99,32 +88,12 @@ class TelaLogin(Screen):
         self.rl.add_widget(entrar)
         self.add_widget(self.rl)
 
-    def enviarEmailComSenha(self,obj):
-        self.login.text = remvDofim(self.login.text)
-        if self.login.text == '':
-            if self.mensagemError.getStatus() == False:
-                self.mensagemError.addMensagem(
-                    "Você não preencheu o campo de login",
-                    {'center_x': .5, 'center_y': .2})
-                self.rl.add_widget(self.mensagemError)
-            else:
-                self.mensagemError.addMensagem(
-                    "Você não preencheu o campo de login",
-                    {'center_x': .5, 'center_y': .2})
-
-        else:
-            pass
-
 
     def exibirSenha(self,checkbox,value):
         if value:
             self.senha.password = False
         else:
             self.senha.password = True
-
-
-    def lembrarCadastro(self,checkbox,value):
-        self.flagSalvarCredenciais = value
 
     def criarCadastro(self,obj):
         self.clear_widgets()
@@ -136,19 +105,28 @@ class TelaLogin(Screen):
 
         if self.mensagemSucesso != None and self.mensagemSucesso.getStatus() != False:
             self.rl.remove_widget(self.mensagemSucesso)
-        # Realizar as operações para entrar no sistema
+        
+        if self.db.login(self.login.text,self.senha.text) == None:
+                if self.mensagemError.getStatus() == False:
+                    self.mensagemError.addMensagem("Login ou senha invalidos",
+                                                   {'center_x': .5, 'center_y': .2})
+                    self.rl.add_widget(self.mensagemError)
+                else:
+                    self.mensagemError.addMensagem("Login ou senha invalidos",
+                                                   {'center_x': .5, 'center_y': .2})
+        else:
+            self.clear_widgets()
+            self.add_widget()
 
 
 
 class TelaCadastro(Screen):
-    def __init__(self,erro = None,login=None,**kw):
+    def __init__(self,**kw):
         super().__init__(**kw)
+        self.db = BancodeDados_cadastro()
+        self.db.criar()
 
         self.mensagemError = Mensagem(error=True)
-
-        self.erro = erro
-
-        self.addComunidade = False
 
         self.rl = RelativeLayout(size=(300, 300))
 
@@ -166,16 +144,13 @@ class TelaCadastro(Screen):
                                  pos_hint={'center_x': .7, 'center_y': .41}, text='Exibir senhas')
 
         self.novoLogin = TextInput(size_hint=(.2, .05),
-                  pos_hint={'center_x': .5, 'center_y': .62}, multiline=False)
+                  pos_hint={'center_x': .5, 'center_y': .56}, multiline=False)
 
         self.nome = TextInput(size_hint=(.2, .05),
-                  pos_hint={'center_x': .5, 'center_y': .69}, multiline=False)
+                  pos_hint={'center_x': .5, 'center_y': .64}, multiline=False)
 
         labelNome = Label(color='black',size_hint=(.2, .05),
-                                 pos_hint={'center_x': .35, 'center_y': .69}, text='Nome')
-
-        self.email = TextInput(size_hint=(.2, .05),
-                                   pos_hint={'center_x': .5, 'center_y': .55}, multiline=False)
+                                 pos_hint={'center_x': .35, 'center_y': .64}, text='Nome')
 
         imagem = Image(source='imagens/imagemTelaCadastro.jpg', pos_hint={'center_x': .5, 'center_y': .5})
 
@@ -192,10 +167,7 @@ class TelaCadastro(Screen):
                            pos_hint={'center_x': .325, 'center_y': .41}, text='Confirmar senha')
 
         labelNovoLogin = Label(color='black',size_hint=(.2, .05),
-                           pos_hint={'center_x': .35, 'center_y': .62}, text='Login')
-
-        labelEmail = Label(color='black',size_hint=(.2, .05),
-                               pos_hint={'center_x': .35, 'center_y': .55}, text='e-mail')
+                           pos_hint={'center_x': .35, 'center_y': .56}, text='Login')
 
         Cadastrar = Button(size_hint=(.1, .05),
                         pos_hint={'center_x': .44, 'center_y': .27},
@@ -205,15 +177,10 @@ class TelaCadastro(Screen):
                         pos_hint={'center_x': .55, 'center_y': .27},
                         text="Voltar", on_press=self.voltar)
 
-        if erro != None:
-            self.rl.add_widget(erro)
-
         self.rl.add_widget(telaFundo)
         self.rl.add_widget(imagem)
         self.rl.add_widget(self.nome)
         self.rl.add_widget(labelNome)
-        self.rl.add_widget(self.email)
-        self.rl.add_widget(labelEmail)
         self.rl.add_widget(labelCriarComunidade)
         self.rl.add_widget(exibirsenhas)
         self.rl.add_widget(labelExibirSenha)
@@ -230,15 +197,109 @@ class TelaCadastro(Screen):
 
 
     def cadastrar(self,obj):
-        if self.erro != None:
-            self.rl.remove_widget(self.erro)
     
         self.senha1.text = remvDofim(self.senha1.text)
         self.senha2.text = remvDofim(self.senha2.text)
         self.novoLogin.text = remvDofim(self.novoLogin.text)
-        self.email.text = remvDofim(self.email.text)
         self.nome.text = remvDofim(self.nome.text)
-        
+        if self.novoLogin.text == '':
+            if self.mensagemError.getStatus() == False:
+                self.mensagemError.addMensagem("O campo de login precisa ser preenchido",
+                                                {'center_x': .5, 'center_y': .2})
+                self.rl.add_widget(self.mensagemError)
+            else:
+                self.mensagemError.addMensagem("O campo de login precisa ser preenchido",
+                                                {'center_x': .5, 'center_y': .2})
+            return
+
+        elif self.senha1.text == '':
+            if self.mensagemError.getStatus() == False:
+                self.mensagemError.addMensagem("O campo de senha precisa ser preenchido",
+                                                {'center_x': .5, 'center_y': .2})
+                self.rl.add_widget(self.mensagemError)
+            else:
+                self.mensagemError.addMensagem("O campo de senha precisa ser preenchido",
+                                                {'center_x': .5, 'center_y': .2})
+            return
+        elif self.senha2.text == '':
+            if self.mensagemError.getStatus() == False:
+                self.mensagemError.addMensagem("É necessario confirmar a senha",
+                                                {'center_x': .5, 'center_y': .2})
+                self.rl.add_widget(self.mensagemError)
+            else:
+                self.mensagemError.addMensagem("É necessario confirmar a senha",
+                                                {'center_x': .5, 'center_y': .2})
+            return
+
+        elif self.nome.text == '':
+            if self.mensagemError.getStatus() == False:
+                self.mensagemError.addMensagem("É necessario adicionar um nome",
+                                                {'center_x': .5, 'center_y': .2})
+                self.rl.add_widget(self.mensagemError)
+            else:
+                self.mensagemError.addMensagem("É necessario adicionar um nome",
+                                                {'center_x': .5, 'center_y': .2})
+            return
+        elif self.senha1.text != self.senha2.text:
+            if self.mensagemError.getStatus() == False:
+                self.mensagemError.addMensagem("As senhas não são iguais",
+                                                {'center_x': .5, 'center_y': .2})
+                self.rl.add_widget(self.mensagemError)
+            else:
+                self.mensagemError.addMensagem("As senhas não são iguais",
+                                                {'center_x': .5, 'center_y': .2})
+            return
+        if test_conexao() == False:    
+            if self.mensagemError.getStatus() == False:
+                self.mensagemError.addMensagem("Você não possui conexão com a internet! Reinicie o programa e tente novamente",
+                                                {'center_x': .5, 'center_y': .2})
+                self.rl.add_widget(self.mensagemError)
+            else:
+                self.mensagemError.addMensagem("Você não possui conexão com a internet! Reinicie o programa e tente novamente",
+                                                {'center_x': .5, 'center_y': .2})
+            return
+    
+        if self.textCriarComunidade.text == "Nome da comunidade" or self.textCriarComunidade.text == '':
+                if self.mensagemError.getStatus() == False:
+                    self.mensagemError.addMensagem("Não adicionou um nome à comunidade",
+                                                           {'center_x': .5, 'center_y': .2})
+                    self.rl.add_widget(self.mensagemError)
+                else:
+                    self.mensagemError.addMensagem("Não adicionou um nome à comunidade",
+                                                           {'center_x': .5, 'center_y': .2})
+                return 
+        elif self.senha1.text == self.senha2.text:
+            teste = verificaIntegridadeSenha(self.senha1.text)
+            if teste == True:
+                if self.db.inserirCadastro(self.novoLogin.text,self.senha1.text,self.nome.text,self.textCriarComunidade.text) == False:
+                    if self.mensagemError.getStatus() == False:
+                        self.mensagemError.addMensagem("Login já existente no banco de dados",
+                                                        {'center_x': .5, 'center_y': .2})
+                        self.rl.add_widget(self.mensagemError)
+                    else:
+                        self.mensagemError.addMensagem("Login já existente no banco de dados",
+                                                        {'center_x': .5, 'center_y': .2})
+                    return
+                else:
+                    self.clear_widgets()
+                    mess = Mensagem(sucesso=True)
+                    mess.addMensagem("Cadastro efetuado com sucesso!!",pos_hint={'center_x': .5, 'center_y': .2})
+                    self.add_widget(TelaLogin(mensagem=mess))
+
+            else:
+                codigosErro = {'tamanho':'A senha deve possuir pelo menos 8 digitos',
+                                'numero': 'A senha deve possuir pelo menos um número',
+                                'maiuscula': 'A senha deve possuir pelo menos uma letra maiúscula',
+                                'letra': 'A senha deve possuir pelo menos uma letra'}
+
+                if self.mensagemError.getStatus() == False:
+                    self.mensagemError.addMensagem(codigosErro[teste],
+                                                    {'center_x': .5, 'center_y': .2})
+                    self.rl.add_widget(self.mensagemError)
+                else:
+                    self.mensagemError.addMensagem(codigosErro[teste],
+                                                    {'center_x': .5, 'center_y': .2})
+                return 
 
             
 
@@ -254,65 +315,3 @@ class TelaCadastro(Screen):
     def voltar(self,obj):
         self.clear_widgets()
         self.add_widget(TelaLogin())
-
-
-class TelaConfirmacaoEmail(Screen):
-    def __init__(self,codigo,destino,login, **kw):
-        super().__init__(**kw)
-        self.login = login
-        self.error = Mensagem(error=True)
-        if envioEmail(destino,'Confirmação',codigo,'confirmar'):
-            self.codigo = codigo
-            self.rl = RelativeLayout(size=(300, 300))
-            self.codigoConfirmacao = TextInput(size_hint=(.2, .05),
-                                               pos_hint={'center_x': .5, 'center_y': .5}, multiline=False)
-
-            labelCodigo = Label(size_hint=(.2, .05),
-                                pos_hint={'center_x': .27, 'center_y': .5}, text='Código de confirmação')
-
-            confirmar = Button(size_hint=(.09, .05),
-                            pos_hint={'center_x': .4, 'center_y': .4},
-                            text="Confirmar", on_press=self.confirmar)
-
-            mensagem = Mensagem(sucesso=True)
-            mensagem.addMensagem("Um código foi enviado ao seu e-mail, favor inserir o código no campo abaixo",{'center_x': .5, 'center_y': .6})
-
-
-            pular = Button(size_hint=(.18, .05),
-                            pos_hint={'center_x': .6, 'center_y': .4},
-                            text="Pular confirmação", on_press=self.pular)
-
-            self.rl.add_widget(pular)
-            self.rl.add_widget(mensagem)
-            self.rl.add_widget(confirmar)
-            self.rl.add_widget(self.codigoConfirmacao)
-            self.rl.add_widget(labelCodigo)
-            self.add_widget(self.rl)
-
-        else:
-            self.clear_widgets()
-            erro = Mensagem(error=True)
-            erro.addMensagem("O email inserido é inválido!",{'center_x': .5, 'center_y': .2})
-            self.add_widget(TelaCadastro(erro=erro,login=self.login))
-
-    def confirmar(self,obj):
-        self.codigoConfirmacao.text = remvDofim(self.codigoConfirmacao.text)
-        if int(self.codigoConfirmacao.text) == self.codigo:
-            self.clear_widgets()
-            cadastroSucesso = Mensagem(sucesso=True)
-            cadastroSucesso.addMensagem("Cadastro efetuado com sucesso",
-                                        {'center_x': .5, 'center_y': .2})
-            self.add_widget(TelaLogin(mensagem=cadastroSucesso))
-        else:
-            if self.error.getStatus() == False:
-                self.error.addMensagem("O código inserido está incorreto, favor inserir novamente!",{'center_x': .5, 'center_y': .2})
-                self.rl.add_widget(self.error)
-            else:
-                self.error.addMensagem("O código inserido está incorreto, favor inserir novamente!",{'center_x': .5, 'center_y': .2})
-
-    def pular(self,obj):
-        self.clear_widgets()
-        cadastroSucesso = Mensagem(sucesso=True)
-        cadastroSucesso.addMensagem("Cadastro efetuado com sucesso",
-                                    {'center_x': .5, 'center_y': .2})
-        self.add_widget(TelaLogin(mensagem=cadastroSucesso))
