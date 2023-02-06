@@ -1,5 +1,6 @@
 import sqlite3
 import numpy as np
+from user import User
 # consulta = http://pythonclub.com.br/gerenciando-banco-dados-sqlite3-python-parte1.html
 # Dados = https://docs.google.com/spreadsheets/d/1_HBwd5AdT7gH_P5IoNFRyOkfJZmTLLPD/edit#gid=11936601
 
@@ -75,7 +76,7 @@ class BancodeDados:
                 );
             """
         )
-    
+        self.conn.commit()
     def marcarContribuinte(self,nomeDizimista:str,nomeRua:str,nCasa:str,mesContribuido:str,anoContribuicao:str)->bool:
         try:
             idDizimista = self.__getIdDizimista(nomeDizimista,nCasa,nomeRua)
@@ -85,6 +86,7 @@ class BancodeDados:
                     values(?,?,?,?);
                 """,(self.__getnewID("doacao","idDoacao"),idDizimista,mesContribuido,anoContribuicao,)
             )
+            self.conn.commit()
             return True
         except Exception:
             return False
@@ -107,7 +109,8 @@ class BancodeDados:
                 values(?,?,?,?,?);
             """,(self.__getnewID("dizimista","idDizimista"),nome,nCasa,dataNiver,nomeRua,)
         )
-    
+        self.conn.commit()
+
     def removerDizimista(self,nome:str,nCasa:str,nomeRua:str)->int:
         try:
             id = self.__getIdDizimista(nome,nCasa,nomeRua)
@@ -116,6 +119,7 @@ class BancodeDados:
                     delete from dizimista where idDizimista = ?;
                 """,(id,)
             )
+            self.conn.commit()
             return True
         except Exception:
             return False
@@ -127,6 +131,7 @@ class BancodeDados:
                     delete from rua where nomeRua = ?;
                 """,(nomeRua,)
             )
+            self.conn.commit()
             return True
         except Exception:
             return False
@@ -139,6 +144,7 @@ class BancodeDados:
                     delete from doacao where idDizimista = ? and mesContribuicao = ?;
                 """,(id,mesDoacao,)
             )
+            self.conn.commit()
             return True
         except Exception:
             return False
@@ -161,6 +167,7 @@ class BancodeDados:
                 values(?,?,?);
             """,(self.__getnewID("rua","idRua"),nomeRua,zelador,)
         )
+        self.conn.commit()
     
     def buscarDizimista(self,nomeDizimista:str)->list:
         return self.cmd.execute(
@@ -201,12 +208,14 @@ class BancodeDados:
                 UPDATE {nomeTabela} set {nomeColuna} = ? where {nomeIdentificador} = ?;
             """,(novoAtributo,identificador,)
         )
+        self.conn.commit()
 
     def alterarRua(self,colunas_alterar:list,novosAtributos:list,nomeRua:str):
         try:
             if len(colunas_alterar) == len(novosAtributos):
                 for i,coluna in enumerate(colunas_alterar):
                     self.__alterar("rua",coluna,"nomeRua",nomeRua,novosAtributos[i])
+                self.conn.commit()
                 return True
             return False
         except Exception:
@@ -220,6 +229,7 @@ class BancodeDados:
                     UPDATE doacao set mesContribuicao = ? where idDizimista = ? and anoContribuicao = ? and mesContribuicao = ?;
                 """,(novoMesDoacao,id,anoDoacao_alterar,antigoMesDoacao,)
             )
+            self.conn.commit()
             return True
         except Exception:
             return False
@@ -232,6 +242,7 @@ class BancodeDados:
                     UPDATE doacao set anoContribuicao = ? where idDizimista = ? and mesContribuicao = ? and anoContribuicao = ?;
                 """,(novoAnoDoacao,id,mesDocao_alterar,antigoAnoDoacao,)
             )
+            self.conn.commit()
             return True
         except Exception:
             return False
@@ -241,13 +252,57 @@ class BancodeDados:
             if len(colunas_alterar) == len(novosAtributos):
                 for i,coluna in enumerate(colunas_alterar):
                     self.__alterar("dizimista",coluna,"idDizimista",self.__getIdDizimista(nomeDizimista,nCasa,nomeRua),novosAtributos[i])
+                self.conn.commit()
                 return True
             return False
         except Exception:
             return False
 
 
-teste = BancodeDados("Teste")
-teste.criar()
-teste.inserirDizimista("Pedro",186,"18/12/2000","Luiz Murat")
-print(teste.getDizimista("Pedro","Luiz Murat","186"))
+class BancodeDados_cadastro:
+    def __init__(self):
+        self.conn = sqlite3.connect(f"{'info'}.db")
+        self.cmd = self.conn.cursor()
+    
+    def criar(self):
+        self.cmd.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cadastro (
+                    login varchar(100),
+                    senha varchar(100),
+                    nome varchar(100) not null,
+                    email varchar(100),
+                    nomeComunidade varchar(100)
+                );
+            """
+        )
+        self.conn.commit()
+
+    def inserirCadastro(self,login:str,senha:str,nome:str,email:str,nomeComunidade:str)->bool:
+        cadastros = transform(self.cmd.execute(
+            """
+                SELECT login from cadastro where login = ?;
+            """,(login,)
+        ).fetchall())
+        if login not in cadastros:
+            self.cmd.execute(
+                """
+                    INSERT INTO cadastro (login,senha,nome,email,nomeComunidade)
+                    values(?,?,?,?,?);
+                """,(login,senha,nome,email,nomeComunidade,)
+            )
+            self.conn.commit()
+            return True
+        return False
+
+    def login(self,login:str,senha:str)->User:
+        info =  self.cmd.execute(
+            """
+                SELECT nome,email,nomeComunidade from cadastro where
+                login = ? and senha = ?;
+            """,(login,senha,)
+        ).fetchall()
+        if len(info) == 0:
+            return None
+        info = info[0]
+        return User(info[0],info[2],info[1])

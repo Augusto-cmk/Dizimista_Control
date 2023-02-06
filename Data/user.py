@@ -1,15 +1,18 @@
-from Data.data import getData,getHora
+from data import getData,getHora
 class User:
-    def __init__(self,nome=None,pagina=None,email=None):
+    def __init__(self,nome=None,nomeComunidade=None,email=None):
         self.nome = nome
-        self.comunidade = pagina
+        self.comunidade = nomeComunidade
         self.email = email
         self.horaLogin = getHora()
         self.dataLogin = getData()
+    
+    def __str__(self) -> str:
+        return self.getName()
 
-    def setUser(self,nome,pagina,email):
+    def setUser(self,nome,nomeComunidade,email):
         self.nome = nome
-        self.comunidade = pagina
+        self.comunidade = nomeComunidade
         self.email = email
 
     def getHoraLogin(self):

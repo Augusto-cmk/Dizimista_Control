@@ -154,12 +154,10 @@ class TelaCadastro(Screen):
 
         telaFundo = Fundo(2000,1000,[0.98,0.98,0.98,0.98])
         
-        self.newComunidade = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .385, 'center_y': .34})
-        self.newComunidade.bind(active = self.criarComunidade)
         self.textCriarComunidade = TextInput(size_hint=(.2, .05),
                            pos_hint={'center_x': .5, 'center_y': .34}, multiline=False,text='Nome da comunidade')
         labelCriarComunidade = Label(color='black',size_hint=(.2, .05),
-                           pos_hint={'center_x': .298, 'center_y': .34}, text='Nova comunidade')
+                           pos_hint={'center_x': .32, 'center_y': .34}, text='Nova comunidade')
 
         exibirsenhas = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .62, 'center_y': .41})
         exibirsenhas.bind(active=self.exibirSenhas)
@@ -200,11 +198,11 @@ class TelaCadastro(Screen):
                                pos_hint={'center_x': .35, 'center_y': .55}, text='e-mail')
 
         Cadastrar = Button(size_hint=(.1, .05),
-                        pos_hint={'center_x': .54, 'center_y': .27},
+                        pos_hint={'center_x': .44, 'center_y': .27},
                         text="Cadastrar", on_press=self.cadastrar)
 
         Voltar = Button(size_hint=(.09, .05),
-                        pos_hint={'center_x': .65, 'center_y': .27},
+                        pos_hint={'center_x': .55, 'center_y': .27},
                         text="Voltar", on_press=self.voltar)
 
         if erro != None:
@@ -217,7 +215,6 @@ class TelaCadastro(Screen):
         self.rl.add_widget(self.email)
         self.rl.add_widget(labelEmail)
         self.rl.add_widget(labelCriarComunidade)
-        self.rl.add_widget(self.newComunidade)
         self.rl.add_widget(exibirsenhas)
         self.rl.add_widget(labelExibirSenha)
         self.rl.add_widget(labelSenha2)
@@ -226,32 +223,22 @@ class TelaCadastro(Screen):
         self.rl.add_widget(self.senha1)
         self.rl.add_widget(self.novoLogin)
         self.rl.add_widget(labelNovoLogin)
+        self.rl.add_widget(self.textCriarComunidade)
         self.rl.add_widget(Voltar)
         self.rl.add_widget(Cadastrar)
         self.add_widget(self.rl)
-
-    def criarComunidade(self,checkbox,value):
-        if value:
-            self.rl.add_widget(self.textCriarComunidade)
-            self.addComunidade = True
-        else:
-            self.rl.remove_widget(self.textCriarComunidade)
-            self.textCriarComunidade.text = "Nome da comunidade"
-            self.addComunidade = False
-            if self.mensagemError.getStatus():
-                self.rl.remove_widget(self.mensagemError)
-                self.mensagemError.setStatus(False)
 
 
     def cadastrar(self,obj):
         if self.erro != None:
             self.rl.remove_widget(self.erro)
-        if test_conexao() != False:
-            self.senha1.text = remvDofim(self.senha1.text)
-            self.senha2.text = remvDofim(self.senha2.text)
-            self.novoLogin.text = remvDofim(self.novoLogin.text)
-            self.email.text = remvDofim(self.email.text)
-            self.nome.text = remvDofim(self.nome.text)
+    
+        self.senha1.text = remvDofim(self.senha1.text)
+        self.senha2.text = remvDofim(self.senha2.text)
+        self.novoLogin.text = remvDofim(self.novoLogin.text)
+        self.email.text = remvDofim(self.email.text)
+        self.nome.text = remvDofim(self.nome.text)
+        
 
             
 
