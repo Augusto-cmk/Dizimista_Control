@@ -168,6 +168,14 @@ class BancodeDados:
                 SELECT * from dizimista where nome = ?;
             """,(nomeDizimista,)
         ).fetchall()
+    
+    def dizimistasRua(self,nomeRua:str)->list:
+        return transform(self.cmd.execute(
+            """
+                SELECT nome from dizimista
+                WHERE nRua = ?;
+            """,(nomeRua)
+        ).fetchall())
 
     def ruasDisponiveis(self)->list:
         return transform(self.cmd.execute(

@@ -218,7 +218,6 @@ class TelaCadastro(Screen):
         self.rl.add_widget(labelEmail)
         self.rl.add_widget(labelCriarComunidade)
         self.rl.add_widget(self.newComunidade)
-        # self.rl.add_widget(self.comunidades)
         self.rl.add_widget(exibirsenhas)
         self.rl.add_widget(labelExibirSenha)
         self.rl.add_widget(labelSenha2)

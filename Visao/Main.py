@@ -14,7 +14,8 @@ from kivy.graphics import Rectangle,Color
 from kivy.uix.gridlayout import GridLayout
 from Data.user import User
 from Data.data import getMes
-from Visao.Login import TelaLogin
+from Visao.LoginCadastro import TelaLogin
+from Data.database import BancodeDados
 
 class TelaPrincipal(Screen):
     def __init__(self,user:User,**kw):
@@ -26,8 +27,7 @@ class TelaPrincipal(Screen):
 
         self.bloco = widgetsBloco(self.rl)
 
-        # imagem = Image(source='imagens/teste.jpg', pos_hint={'center_x': .5, 'center_y': .5})
-        #adicionar uma imagem 4k para esta parte da interface
+        imagem = Image(source='imagens/fundo-de-formas-abstratas-brancas_79603-1362.avif', pos_hint={'center_x': .5, 'center_y': .5})
 
         labelNomeUser = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .18, 'center_y': .96}, text=f'Usuário: {user.getName()}')
@@ -48,9 +48,10 @@ class TelaPrincipal(Screen):
                         pos_hint={'center_x': .05, 'center_y': 0.96},
                         text="Sair", on_press=self.sair)
 
-
+        limparTela = Button(size_hint = (.18,.05),pos_hint={'center_x': .105,'center_y':0.76},text='Limpar tela',on_press=self.limpartela)
         visualizarDizimistas = Menu('Opções de visualização',{'center_x': .105, 'center_y': 0.68},(.2,.05),
                                     ['Todos os dizimistas','Contribuintes','Não contribuintes'])
+        # Utilizar gráficos demonstrativos para explicar de forma resumida como estão todos os dizimistas em relação a contribuição
 
         ver = Button(size_hint=(.18, .05),
                                       pos_hint={'center_x': .105, 'center_y': 0.6},
@@ -62,7 +63,7 @@ class TelaPrincipal(Screen):
 
         removerDizimista = Button(size_hint=(.18, .05),
                                       pos_hint={'center_x': .105, 'center_y': 0.3},
-                                      text="Remover dizimista")
+                                      text="Remover dizimista",on_press=self.telaRemove)
 
         marcarContribuintes  = Button(size_hint=(.18, .05),
                                       pos_hint={'center_x': .105, 'center_y': 0.2},
@@ -73,7 +74,8 @@ class TelaPrincipal(Screen):
                                      text="Alterar dados")
 
 
-        # self.rl.add_widget(imagem)
+        self.rl.add_widget(imagem)
+        self.rl.add_widget(limparTela)
         self.rl.add_widget(alterar)
         self.rl.add_widget(ver)
         self.rl.add_widget(marcarContribuintes)
@@ -90,7 +92,19 @@ class TelaPrincipal(Screen):
 
         self.add_widget(self.rl)
 
+    def limpartela(self,obj):
+        self.bloco.limparWidgets()
 
+    def telaRemove(self,obj):
+        if self.bloco.erro:
+            self.bloco.limparWidgets()
+        
+        self.ruaSelecao = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),
+                               ['teste','teste1'])
+        self.bloco.blocoRemoverDizimista(Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .15},
+                                     text="Remover",on_press=self.remove),None,self.ruaSelecao)
+    
     def telaadd(self,obj):
         textInNome = None
         textInNumero = None
@@ -102,6 +116,9 @@ class TelaPrincipal(Screen):
         self.bloco.blocoAdicionarDizimista(Button(size_hint=(.18, .05),
                                      pos_hint={'center_x': .65, 'center_y': .15},
                                      text="Adicionar",on_press=self.add),self.ruaSelecao)
+    
+    def remove(self,obj):
+        pass
 
     def add(self,obj):
         pass
@@ -142,8 +159,9 @@ class widgetsBloco(Widget):
         super().__init__(**kwargs)
         self.rl = rl
         self.listaWidget = list()
+        self.erro = False
 
-    def blocoAdicionarDizimista(self,buttonAdd,menuRua):
+    def blocoAdicionarDizimista(self,buttonAdd:Button,menuRua:Menu):
         self.limparWidgets()
 
         labelNome = Label(color='black',size_hint=(.2, .05),
@@ -224,6 +242,66 @@ class widgetsBloco(Widget):
         self.listaWidget.append(labelBarra)
         self.rl.add_widget(buttonAdd)
         self.listaWidget.append(buttonAdd)
+    
+    def blocoRemoverDizimista(self,buttonRemove:Button,bd:BancodeDados,menuRua:Menu):
+        self.limparWidgets()
+        labelToRemove = Label(color='black', size_hint=(.2, .05),
+                                 pos_hint={'center_x': .4, 'center_y': .76},
+                                 text='Feito')
+        box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .76})
+        box.bind(active=self.selecionarNome)
+        self.rl.add_widget(labelToRemove)
+        self.listaWidget.append(labelToRemove)
+        self.rl.add_widget(box)
+        self.listaWidget.append(box)
+        self.rl.add_widget(menuRua)
+        self.listaWidget.append(menuRua)
+        self.bd = bd
+        self.menuRua = menuRua
+        self.buttonRemove = buttonRemove
+        self.widgetsNovo = [labelToRemove,box,menuRua]
+    
+    def selecionarNome(self,checkbox,value):
+        nomeRua = self.menuRua.text
+        self.removeWidgetsByList(self.widgetsNovo)
+        if value and nomeRua != "Selecione a rua do dizimista":
+            menuDizimistas = Menu('Selecione um dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),['Teste1','Teste2'])#self.bd.dizimistasRua(nomeRua))
+            labelToRemove = Label(color='black', size_hint=(.2, .05),
+                                 pos_hint={'center_x': .4, 'center_y': .76},
+                                 text='Feito')
+            box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .76})
+            box.bind(active=self.removerDizimista)
+            self.widgetsNovo.append(labelToRemove)
+            self.widgetsNovo.append(box)
+            self.widgetsNovo.append(menuDizimistas)
+            self.rl.add_widget(menuDizimistas)
+            self.rl.add_widget(labelToRemove)
+            self.rl.add_widget(box)
+        
+        elif nomeRua == "Selecione a rua do dizimista":
+            self.erro = True
+            self.removeWidgetsByList(self.widgetsNovo)
+            mensagem = Mensagem(error=True)
+            mensagem.addMensagem("Não foi selecionada uma rua, favor tentar novamente !!",pos_hint={'center_x': .65, 'center_y': .76})
+            self.rl.add_widget(mensagem)
+            self.listaWidget.append(mensagem)
+        
+        else:
+            self.removeWidgetsByList(self.widgetsNovo)
+    
+    def removerDizimista(self,checkbox,value):
+        self.removeWidgetsByList(self.widgetsNovo)
+        if value:
+            # Colocar aqui a impressão das informações do dizimista e o botão de remover
+            pass
+        else:
+            pass
+
+    def removeWidgetsByList(self,widgets:list):
+        for widget in widgets:
+            self.rl.remove_widget(widget)
+        
+        widgets = list()
 
     def blocoMarcarContribuintes(self,menu,exec):
         self.limparWidgets()
@@ -251,15 +329,11 @@ class widgetsBloco(Widget):
             self.listaWidget.append(self.textInZelador)
 
         else:
-            for widget in self.widgetsNovo:
-                self.rl.remove_widget(widget)
+            self.removeWidgetsByList(self.widgetsNovo)
 
 
     def limparWidgets(self):
-        for widget in self.listaWidget:
-            self.rl.remove_widget(widget)
-
-        self.listaWidget = list()
+        self.removeWidgetsByList(self.listaWidget)
 
 
 
