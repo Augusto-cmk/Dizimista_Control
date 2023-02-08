@@ -448,9 +448,9 @@ class TelaPrincipal(Screen):
                     {'center_x': .65, 'center_y': .2})
 
         else:
-            bloco = blocoTela(self.Contribuintes,self.user,self.df,self.ruaSelecao.text)
-            nomesDizimistas,dic = self.Contribuintes.dizimistasDaRua(self.ruaSelecao.text)
-            bloco.telaMarcar(0.8, 0.65, nomesDizimistas,dic,getMes())
+            bloco = blocoTela(self.user,self.ruaSelecao.text)
+            nomesDizimistas = self.db.dizimistasRua(self.ruaSelecao.text)
+            bloco.telaMarcar(0.8, 0.65, nomesDizimistas,getMes())
             self.rl.clear_widgets()
             self.add_widget(bloco)
 
@@ -608,7 +608,7 @@ class widgetsBloco(Widget):
         
         widgets = list()
 
-    def blocoMarcarContribuintes(self,menu:Menu,exec):
+    def blocoMarcarContribuintes(self,menu:Menu,exec:Button):
         self.limparWidgets()
         label = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .67, 'center_y': .7},
@@ -643,27 +643,25 @@ class widgetsBloco(Widget):
 
 
 class blocoTela(Screen):
-    def __init__(self,Contribuintes,user,df,nomeRua,**kwargs):
+    def __init__(self,user:User,nomeRua:str,**kwargs):
         super().__init__(**kwargs)
-        self.Contribuintes = Contribuintes
         self.nomeRua = nomeRua
         self.user = user
-        self.df = df
+        self.db = BancodeDados(self.user.getComunidade())
         self.checkBoxes = None
         self.dic = None
         self.mes = None
 
-    def telaMarcar(self,pos_x,pos_y,listaNomes,dic,mes):
-        self.dic = dic
+    def telaMarcar(self,pos_x,pos_y,listaNomes,mes):
         self.mes = mes
         self.feito = Button(text="Feito",on_press=self.marcados)
         self.checkBoxes = checkboxList(pos_x, pos_y, listaNomes)
 
-        self.add_widget(caixaRolagem(self.feito,self.checkBoxes,self.Contribuintes,self.user,self.df))
+        self.add_widget(caixaRolagem(self.feito,self.checkBoxes,self.user))
 
 
     def marcados(self,obj):
-        self.Contribuintes.dizimistasMes(self.checkBoxes.getNomesAtivos(),self.nomeRua,self.dic,self.mes)
+        # Executar comando para marcar os contribuintes do mes
         self.clear_widgets()
         self.add_widget(TelaPrincipal(self.user))
 

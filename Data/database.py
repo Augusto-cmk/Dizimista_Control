@@ -195,7 +195,7 @@ class BancodeDados:
             """
                 SELECT nome from dizimista
                 WHERE nRua = ?;
-            """,(nomeRua)
+            """,(nomeRua,)
         ).fetchall())
 
     def ruasDisponiveis(self)->list:
