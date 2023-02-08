@@ -18,7 +18,8 @@ from Data.data import getData,getHora,getMes
 from Data.database import BancodeDados_cadastro
 from Data.user import User
 from Data.database import BancodeDados
-
+from modelo.dizimista import dizimista
+from modelo.rua import Rua
 class Fundo(Widget):
     def __init__(self,tam_x,tam_y,cor,pos_x=None,pos_y=None, **kwargs):
         super().__init__(**kwargs)
@@ -413,21 +414,8 @@ class TelaPrincipal(Screen):
                                      text="Remover",on_press=self.remove),None,self.ruaSelecao)
     
     def telaadd(self,obj):
-        textInNome = None
-        textInNumero = None
-        textInRua = None
-        textInZelador = None
-        textInAniversario = None
         self.ruaSelecao = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .42}, (.28, .05),self.db.ruasDisponiveis())
-        self.bloco.blocoAdicionarDizimista(Button(size_hint=(.18, .05),
-                                     pos_hint={'center_x': .65, 'center_y': .15},
-                                     text="Adicionar",on_press=self.add),self.ruaSelecao)
-    
-    def remove(self,obj):
-        pass
-
-    def add(self,obj):
-        pass
+        self.bloco.blocoAdicionarDizimista(self.ruaSelecao,self.user)
 
     def selecMark(self,obj):
         self.ruaSelecao = Menu('Selecione uma rua', {'center_x': .55, 'center_y': .5}, (.28, .05),self.db.ruasDisponiveis())
@@ -466,8 +454,13 @@ class widgetsBloco(Widget):
         self.listaWidget = list()
         self.erro = False
 
-    def blocoAdicionarDizimista(self,buttonAdd:Button,menuRua:Menu):
+    def blocoAdicionarDizimista(self,menuRua:Menu,user:User):
         self.limparWidgets()
+        self.db = BancodeDados(user.getComunidade())
+        self.novaRuaInserida = False
+        buttonAdd = Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .15},
+                                     text="Adicionar",on_press=self.addDizimista)
 
         labelNome = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .46, 'center_y': .65},
@@ -548,6 +541,15 @@ class widgetsBloco(Widget):
         self.rl.add_widget(buttonAdd)
         self.listaWidget.append(buttonAdd)
     
+    def addDizimista(self,obj):
+        if self.novaRuaInserida:
+            nomeRua = remvDofim(self.textInNome.text)
+            nomeZelador = remvDofim(self.textInZelador.text)
+            if nomeRua == '' or nomeZelador == '':
+                error = Mensagem(error=True)
+                error.addMensagem("Os campos de nome e zelador não foram preenchidos")
+
+    
     def blocoRemoverDizimista(self,buttonRemove:Button,bd:BancodeDados,menuRua:Menu):
         self.limparWidgets()
         labelToRemove = Label(color='black', size_hint=(.2, .05),
@@ -622,8 +624,8 @@ class widgetsBloco(Widget):
         self.listaWidget.append(exec)
 
     def novaRua(self,checkbox,value):
-
         if value:
+            self.novaRuaInserida = True
             self.rl.add_widget(self.labelNomeRua)
             self.listaWidget.append(self.labelNomeRua)
             self.rl.add_widget(self.textInNome)
@@ -634,6 +636,7 @@ class widgetsBloco(Widget):
             self.listaWidget.append(self.textInZelador)
 
         else:
+            self.novaRuaInserida = False
             self.removeWidgetsByList(self.widgetsNovo)
 
 

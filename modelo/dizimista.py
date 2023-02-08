@@ -1,21 +1,21 @@
-from Data.database import BancodeDados
-import datetime
 class dizimista:
-    def __init__(self,nome:str,rua:str,nCasa:str,data:BancodeDados)->bool:
-        info = data.getDizimista(nome,rua,nCasa)
-        if info:
-            self.nome = info[1]
-            self.nCasa = info[2]
-            self.aniversario = datetime.strptime(info[3], '%d/%m/%Y').date()
-            self.rua = info[4]
-            self.database = data
-            return True
-        else:
-            return False
-
+    def __init__(self,nome:str,rua:str,nCasa:str)->bool:
+        self.rua = rua
+        self.nome = nome
+        self.nCasa = nCasa
     
     def __str__(self)->str:
         return self.nome
+    
+    def getNome(self)->str:
+        return self.nome
+    
+    def getRua(self)->str:
+        return self.rua
+    
+    def getNCasa(self)->str:
+        return self.nCasa
+    
     
 
 
