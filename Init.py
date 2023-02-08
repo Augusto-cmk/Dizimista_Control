@@ -1,7 +1,6 @@
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
-from Visao.LoginCadastro import TelaLogin
-from Visao.Main import TelaPrincipal
+from Visao.Interfaces import TelaLogin
 from Data.user import User
 
 class GerenciadorTelas(ScreenManager):

@@ -103,13 +103,20 @@ class BancodeDados:
             return None
 
     def inserirDizimista(self,nome:str,nCasa:int,dataNiver:str,nomeRua:str):
-        self.cmd.execute(
-            f"""
-                INSERT INTO dizimista(idDizimista,nome,nCasa,aniversario,nRua)
-                values(?,?,?,?,?);
-            """,(self.__getnewID("dizimista","idDizimista"),nome,nCasa,dataNiver,nomeRua,)
-        )
-        self.conn.commit()
+        dizimista = transform(self.cmd.execute(
+            """
+            SELECT nome from dizimista where nome = ?;
+            """,(nome,)
+        ).fetchall())
+
+        if nome not in dizimista:
+            self.cmd.execute(
+                f"""
+                    INSERT INTO dizimista(idDizimista,nome,nCasa,aniversario,nRua)
+                    values(?,?,?,?,?);
+                """,(self.__getnewID("dizimista","idDizimista"),nome,nCasa,dataNiver,nomeRua,)
+            )
+            self.conn.commit()
 
     def removerDizimista(self,nome:str,nCasa:str,nomeRua:str)->int:
         try:
@@ -161,13 +168,20 @@ class BancodeDados:
             return None
     
     def inserirRua(self,nomeRua:str,zelador:str):
-        self.cmd.execute(
+        ruas = transform(self.cmd.execute(
             """
-                INSERT INTO rua(idRua,nomeRua,zelador)
-                values(?,?,?);
-            """,(self.__getnewID("rua","idRua"),nomeRua,zelador,)
-        )
-        self.conn.commit()
+                SELECT nomeRua from rua where nomeRua = ?;
+            """,(nomeRua,)
+        ).fetchall())
+
+        if nomeRua not in ruas:
+            self.cmd.execute(
+                """
+                    INSERT INTO rua(idRua,nomeRua,zelador)
+                    values(?,?,?);
+                """,(self.__getnewID("rua","idRua"),nomeRua,zelador,)
+            )
+            self.conn.commit()
     
     def buscarDizimista(self,nomeDizimista:str)->list:
         return self.cmd.execute(
@@ -304,4 +318,4 @@ class BancodeDados_cadastro:
         if len(info) == 0:
             return None
         info = info[0]
-        return User(info[0],info[2],info[1])
+        return User(info[0],info[1])
