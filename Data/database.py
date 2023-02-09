@@ -110,8 +110,8 @@ class BancodeDados:
     def inserirDizimista(self,nome:str,nCasa:int,dataNiver:str,nomeRua:str):
         dizimista = transform(self.cmd.execute(
             """
-            SELECT nome from dizimista where nome = ?;
-            """,(nome,)
+            SELECT nome from dizimista where nome = ? and nCasa = ? and nRua = ?;
+            """,(nome,nCasa,nomeRua,)
         ).fetchall())
 
         if nome not in dizimista:
@@ -122,6 +122,9 @@ class BancodeDados:
                 """,(self.__getnewID("dizimista","idDizimista"),nome,nCasa,dataNiver,nomeRua,)
             )
             self.conn.commit()
+            return True
+        else:
+            return False
 
     def removerDizimista(self,nome:str,nCasa:str,nomeRua:str)->int:
         try:
@@ -203,6 +206,37 @@ class BancodeDados:
             """,(nomeRua,)
         ).fetchall()
         return concat(infos)
+
+    def naoContribuintesRua(self,mes:str,ano:str,nomeRua:str)->list:
+        contribuintes = np.array(transform(self.cmd.execute(
+            """
+                SELECT idDizimista from doacao
+                WHERE mesContribuicao = ? and anoContribuicao = ?;
+            """,(mes,ano,)
+        ).fetchall()))
+
+        dizimistasRua = np.array(transform(self.cmd.execute(
+            """
+                SELECT idDizimista from dizimista
+                WHERE nRua = ?;
+            """,(nomeRua,)
+        ).fetchall()))
+
+        idNaoContribuintes = []
+        for id in dizimistasRua:
+            if id not in contribuintes:
+                idNaoContribuintes.append(int(id))
+
+        infos = list()
+        for id in idNaoContribuintes:
+            infos.append(concat(self.cmd.execute(
+                """
+                    SELECT nome,nCasa from dizimista
+                    WHERE idDizimista = ?;
+                """,(id,)
+            ).fetchall())[0])
+        return infos
+
 
     def ruasDisponiveis(self)->list:
         return transform(self.cmd.execute(
@@ -325,3 +359,7 @@ class BancodeDados_cadastro:
             return None
         info = info[0]
         return User(info[0],info[1])
+
+
+teste = BancodeDados("Comunidade")
+print(teste.doacoesDizimista("Pedro Maia",'Luiz Murat','186','2023'))

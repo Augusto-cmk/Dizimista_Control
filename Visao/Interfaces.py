@@ -14,7 +14,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.scrollview import ScrollView
 from kivy.graphics import Rectangle,Color
 from kivy.uix.gridlayout import GridLayout
-from Data.data import getData,getHora,getMes
+from Data.data import getData,getHora,getMes,getAno
 from Data.database import BancodeDados_cadastro
 from Data.user import User
 from Data.database import BancodeDados
@@ -432,7 +432,7 @@ class TelaPrincipal(Screen):
 
         else:
             bloco = blocoTela(self.user,self.ruaSelecao.text)
-            nomesDizimistas = self.db.dizimistasRua(self.ruaSelecao.text)
+            nomesDizimistas = self.db.naoContribuintesRua(getMes(),getAno(),self.ruaSelecao.text)
             bloco.telaMarcar(0.8, 0.65, nomesDizimistas,getMes())
             self.rl.clear_widgets()
             self.add_widget(bloco)
@@ -448,6 +448,8 @@ class widgetsBloco(Widget):
         self.rl = rl
         self.listaWidget = list()
         self.erro = False
+        self.infodiz = infoDizimista(self.rl)
+        self.mensagens = list()
 
     def blocoAdicionarDizimista(self,user:User):
         self.limparWidgets()
@@ -538,6 +540,7 @@ class widgetsBloco(Widget):
         self.listaWidget.append(buttonAdd)
     
     def addDizimista(self,obj):
+        self.removeWidgetsByList(self.mensagens)
         nomeDizimista = remvDofim(self.textNomeDizimista.text)
         numeroDizimista = remvDofim(self.textNumeroDizimista.text)
         diaAniversario = remvDofim(self.textAniversarioDia.text)
@@ -584,12 +587,19 @@ class widgetsBloco(Widget):
                     self.widgetsNovo.append(error)
                     self.listaWidget.append(error)
                 else:
-                    self.db.inserirDizimista(nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",self.ruaSelecao.text)
-                    sucesso = Mensagem(sucesso=True)
-                    sucesso.addMensagem("Dizimista inserido com sucesso!",{'center_x': .65, 'center_y': .1})
-                    self.rl.add_widget(sucesso)
-                    self.widgetsNovo.append(sucesso)
-                    self.listaWidget.append(sucesso)
+                    resposta = self.db.inserirDizimista(nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",self.ruaSelecao.text)
+                    if resposta:
+                        sucesso = Mensagem(sucesso=True)
+                        sucesso.addMensagem("Dizimista inserido com sucesso!",{'center_x': .65, 'center_y': .1})
+                        self.rl.add_widget(sucesso)
+                        self.mensagens.append(sucesso)
+                        self.listaWidget.append(sucesso)
+                    else:
+                        erro = Mensagem(error=True)
+                        erro.addMensagem("Dizimista não foi inserido por que já existe!",{'center_x': .65, 'center_y': .1})
+                        self.rl.add_widget(erro)
+                        self.mensagens.append(erro)
+                        self.listaWidget.append(erro)
 
 
     
@@ -597,7 +607,7 @@ class widgetsBloco(Widget):
         self.limparWidgets()
         self.db = BancodeDados(user.getComunidade())
         buttonRemove = Button(size_hint=(.18, .05),
-                                     pos_hint={'center_x': .65, 'center_y': .15},
+                                     pos_hint={'center_x': .65, 'center_y': .55},
                                      text="Remover",on_press=self.remover)
         labelToRemove = Label(color='black', size_hint=(.2, .05),
                                  pos_hint={'center_x': .4, 'center_y': .76},
@@ -632,6 +642,9 @@ class widgetsBloco(Widget):
             self.rl.add_widget(self.menuDizimistas)
             self.rl.add_widget(labelToRemove)
             self.rl.add_widget(box)
+            self.listaWidget.append(self.menuDizimistas)
+            self.listaWidget.append(labelToRemove)
+            self.listaWidget.append(box)
         
         elif nomeRua == "Selecione a rua do dizimista":
             self.erro = True
@@ -646,6 +659,7 @@ class widgetsBloco(Widget):
     
     def removerDizimista(self,checkbox,value):
         self.removeWidgetsByList(self.widgetsNovo)
+        self.infodiz.limparInfo()
         if value:
             dadosDizimista = self.menuDizimistas.text.split("-")
             if self.menuDizimistas.text == "Selecione um dizimista":
@@ -655,16 +669,26 @@ class widgetsBloco(Widget):
                 self.widgetsNovo.append(error)
                 self.listaWidget.append(error)
             else:
-                nome = dadosDizimista[0]
-                numero = dadosDizimista[1]
-                infoDizimista = self.db.getDizimista(nome,self.menuRua.text,numero)
-                # mostrar informações do dizimista
+                self.nome = remvDofim(dadosDizimista[0])
+                self.numero = remvDofim(dadosDizimista[1])
+                infodizimista = self.db.getDizimista(self.nome,self.menuRua.text,self.numero)
+                self.infodiz.showInfo({'center_x': .65, 'center_y': .76},infodizimista[1],infodizimista[2],infodizimista[3],infodizimista[4]) 
+                self.removeWidgetsByList(self.widgetsNovo)
+                self.rl.add_widget(self.buttonRemove)
+                self.listaWidget.append(self.buttonRemove)
                 
         else:
             self.removeWidgetsByList(self.widgetsNovo)
     
     def remover(self,obj):
-        pass
+        self.db.removerDizimista(self.nome,self.numero,self.menuRua.text)
+        sucesso = Mensagem(sucesso=True)
+        sucesso.addMensagem("Dizimista removido com sucesso!",{'center_x': .65, 'center_y': .45})
+        self.rl.add_widget(sucesso)
+        self.widgetsNovo.append(sucesso)
+        self.listaWidget.append(sucesso)
+        for widget in self.infodiz.listaWidget:
+            self.listaWidget.append(widget)
 
     def removeWidgetsByList(self,widgets:list):
         for widget in widgets:
@@ -707,21 +731,49 @@ class widgetsBloco(Widget):
 
 
 class infoDizimista(Widget):
-    def __init__(self,rl:RelativeLayout,pos_hint:dict, **kwargs):
+    def __init__(self,rl:RelativeLayout, **kwargs):
         super().__init__(**kwargs)
         self.rl = rl
         self.listaWidget = list()
         self.erro = False
-        self.pos = pos_hint
     
-    def showInfo(self,nomeDizimista:str,numeroCasa:str,dataAniver:str,nomeRua:str):
+    def showInfo(self,pos,nomeDizimista:str,numeroCasa:str,dataAniver:str,nomeRua:str):
         labelInit = Label(color='black',size_hint=(.2, .05),
-                               pos_hint=self.pos,
+                               pos_hint=pos,
                       text='_____________ informações _____________')
         
         labelNome = Label(color='black',size_hint=(.2, .05),
-                               pos_hint={'center_x': self.pos['center_x'], 'center_y':self.pos['center_y']-0.02},
-                      text='_____________ informações _____________')
+                               pos_hint={'center_x': pos['center_x'], 'center_y':pos['center_y']-0.04},
+                      text=f'Nome: {nomeDizimista}')
+        
+        labelNomeRua = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': pos['center_x'], 'center_y':pos['center_y']-0.08},
+                      text=f'Rua: {nomeRua}')
+        
+        labelNumero = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': pos['center_x'], 'center_y':pos['center_y']-0.12},
+                      text=f'Número da casa: {numeroCasa}')
+        
+        labelAniversario = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': pos['center_x'], 'center_y':pos['center_y']-0.16},
+                      text=f'Data de Aniversário: {dataAniver}')
+
+        self.rl.add_widget(labelInit)
+        self.rl.add_widget(labelNome)
+        self.rl.add_widget(labelNomeRua)
+        self.rl.add_widget(labelNumero)
+        self.rl.add_widget(labelAniversario)
+        self.listaWidget.append(labelInit)
+        self.listaWidget.append(labelNome)
+        self.listaWidget.append(labelNomeRua)
+        self.listaWidget.append(labelNumero)
+        self.listaWidget.append(labelAniversario)
+    
+    def limparInfo(self):
+        for widget in self.listaWidget:
+            self.rl.remove_widget(widget)
+        
+        self.listaWidget = list()
 
 class blocoTela(Screen):
     def __init__(self,user:User,nomeRua:str,**kwargs):
@@ -742,7 +794,13 @@ class blocoTela(Screen):
 
 
     def marcados(self,obj):
-        # Executar comando para marcar os contribuintes do mes
+        nomesConstribuintes = self.checkBoxes.getNomesAtivos()
+        for contribuinte in nomesConstribuintes:
+            diz = contribuinte.split('-')
+            nome = remvDofim(diz[0])
+            nCasa = remvDofim(diz[1])
+            self.db.marcarContribuinte(nome,self.nomeRua,nCasa,getMes(),getAno())
+
         self.clear_widgets()
         self.add_widget(TelaPrincipal(self.user))
 

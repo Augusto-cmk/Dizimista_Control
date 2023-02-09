@@ -12,3 +12,7 @@ def getData():
 def getMes():
     data = datetime.now()
     return data.month
+
+def getAno():
+    data = datetime.now()
+    return data.year
