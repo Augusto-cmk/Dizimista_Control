@@ -407,15 +407,10 @@ class TelaPrincipal(Screen):
         if self.bloco.erro:
             self.bloco.limparWidgets()
         
-        self.ruaSelecao = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),
-                               self.db.ruasDisponiveis())
-        self.bloco.blocoRemoverDizimista(Button(size_hint=(.18, .05),
-                                     pos_hint={'center_x': .65, 'center_y': .15},
-                                     text="Remover",on_press=self.remove),None,self.ruaSelecao)
+        self.bloco.blocoRemoverDizimista(self.user)
     
     def telaadd(self,obj):
-        self.ruaSelecao = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .42}, (.28, .05),self.db.ruasDisponiveis())
-        self.bloco.blocoAdicionarDizimista(self.ruaSelecao,self.user)
+        self.bloco.blocoAdicionarDizimista(self.user)
 
     def selecMark(self,obj):
         self.ruaSelecao = Menu('Selecione uma rua', {'center_x': .55, 'center_y': .5}, (.28, .05),self.db.ruasDisponiveis())
@@ -454,10 +449,11 @@ class widgetsBloco(Widget):
         self.listaWidget = list()
         self.erro = False
 
-    def blocoAdicionarDizimista(self,menuRua:Menu,user:User):
+    def blocoAdicionarDizimista(self,user:User):
         self.limparWidgets()
         self.db = BancodeDados(user.getComunidade())
         self.novaRuaInserida = False
+        self.ruaSelecao = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .42}, (.28, .05),self.db.ruasDisponiveis())
         buttonAdd = Button(size_hint=(.18, .05),
                                      pos_hint={'center_x': .65, 'center_y': .15},
                                      text="Adicionar",on_press=self.addDizimista)
@@ -466,14 +462,14 @@ class widgetsBloco(Widget):
                                pos_hint={'center_x': .46, 'center_y': .65},
                       text='Nome do dizimista')
 
-        textInNome = TextInput(size_hint=(.2, .05),
+        self.textNomeDizimista = TextInput(size_hint=(.2, .05),
                                    pos_hint={'center_x': .7, 'center_y': .65}, multiline=False)
 
         labelNumero = Label(color='black', size_hint=(.2, .05),
                           pos_hint={'center_x': .467, 'center_y': .58},
                           text='Número da casa')
 
-        textInNumero = TextInput(size_hint=(.2, .05),
+        self.textNumeroDizimista = TextInput(size_hint=(.2, .05),
                                    pos_hint={'center_x': .7, 'center_y': .58}, multiline=False)
 
 
@@ -481,14 +477,14 @@ class widgetsBloco(Widget):
                                pos_hint={'center_x': .46, 'center_y': .51},
                       text='Data de aniversário')
 
-        textInAniversarioDia = TextInput(size_hint=(.04, .045),
+        self.textAniversarioDia = TextInput(size_hint=(.04, .045),
                                    pos_hint={'center_x': .619, 'center_y': .51}, multiline=False)
 
         labelBarra = Label(color='black', size_hint=(.2, .05),
                                  pos_hint={'center_x': .649, 'center_y': .51},
                                  text='/')
 
-        textInAniversarioMes = TextInput(size_hint=(.04, .045),
+        self.textAniversarioMes = TextInput(size_hint=(.04, .045),
                                          pos_hint={'center_x': .679, 'center_y': .51}, multiline=False)
 
         box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .42})
@@ -526,53 +522,105 @@ class widgetsBloco(Widget):
         self.rl.add_widget(nova)
         self.listaWidget.append(nova)
 
-        self.rl.add_widget(textInNome)
-        self.listaWidget.append(textInNome)
-        self.rl.add_widget(textInNumero)
-        self.listaWidget.append(textInNumero)
-        self.rl.add_widget(menuRua)
-        self.listaWidget.append(menuRua)
-        self.rl.add_widget(textInAniversarioDia)
-        self.listaWidget.append(textInAniversarioDia)
-        self.rl.add_widget(textInAniversarioMes)
-        self.listaWidget.append(textInAniversarioMes)
+        self.rl.add_widget(self.textNomeDizimista)
+        self.listaWidget.append(self.textNomeDizimista)
+        self.rl.add_widget(self.textNumeroDizimista)
+        self.listaWidget.append(self.textNumeroDizimista)
+        self.rl.add_widget(self.ruaSelecao)
+        self.listaWidget.append(self.ruaSelecao)
+        self.rl.add_widget(self.textAniversarioDia)
+        self.listaWidget.append(self.textAniversarioDia)
+        self.rl.add_widget(self.textAniversarioMes)
+        self.listaWidget.append(self.textAniversarioMes)
         self.rl.add_widget(labelBarra)
         self.listaWidget.append(labelBarra)
         self.rl.add_widget(buttonAdd)
         self.listaWidget.append(buttonAdd)
     
     def addDizimista(self,obj):
+        nomeDizimista = remvDofim(self.textNomeDizimista.text)
+        numeroDizimista = remvDofim(self.textNumeroDizimista.text)
+        diaAniversario = remvDofim(self.textAniversarioDia.text)
+        mesAniversario = remvDofim(self.textAniversarioMes.text)
         if self.novaRuaInserida:
             nomeRua = remvDofim(self.textInNome.text)
             nomeZelador = remvDofim(self.textInZelador.text)
+            nomeDizimista = remvDofim(self.textNomeDizimista.text)
+
             if nomeRua == '' or nomeZelador == '':
                 error = Mensagem(error=True)
-                error.addMensagem("Os campos de nome e zelador não foram preenchidos")
+                error.addMensagem("Todos os campos da nova rua precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+            else:
+                if nomeDizimista == '' or numeroDizimista == '' or diaAniversario == '' or mesAniversario == '':
+                    error = Mensagem(error=True)
+                    error.addMensagem("Todos os campos do novo dizimista precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.widgetsNovo.append(error)
+                    self.listaWidget.append(error)
+                else:
+                    self.db.inserirRua(nomeRua,nomeZelador)
+                    self.db.inserirDizimista(nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",nomeRua)
+                    sucesso = Mensagem(sucesso=True)
+                    sucesso.addMensagem("Dizimista inserido com sucesso!",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(sucesso)
+                    self.widgetsNovo.append(sucesso)
+                    self.listaWidget.append(sucesso)
+        else:
+            self.removeWidgetsByList(self.widgetsNovo)
+            if self.ruaSelecao.text == 'Selecione a rua do dizimista':
+                error = Mensagem(error=True)
+                error.addMensagem("É necessário que selecione uma rua ou crie uma nova rua para adicionar o dizimista",{'center_x': .6, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+            else:
+                if nomeDizimista == '' or numeroDizimista == '' or diaAniversario == '' or mesAniversario == '':
+                    error = Mensagem(error=True)
+                    error.addMensagem("Todos os campos do novo dizimista precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.widgetsNovo.append(error)
+                    self.listaWidget.append(error)
+                else:
+                    self.db.inserirDizimista(nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",self.ruaSelecao.text)
+                    sucesso = Mensagem(sucesso=True)
+                    sucesso.addMensagem("Dizimista inserido com sucesso!",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(sucesso)
+                    self.widgetsNovo.append(sucesso)
+                    self.listaWidget.append(sucesso)
+
 
     
-    def blocoRemoverDizimista(self,buttonRemove:Button,bd:BancodeDados,menuRua:Menu):
+    def blocoRemoverDizimista(self,user:User):
         self.limparWidgets()
+        self.db = BancodeDados(user.getComunidade())
+        buttonRemove = Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .15},
+                                     text="Remover",on_press=self.remover)
         labelToRemove = Label(color='black', size_hint=(.2, .05),
                                  pos_hint={'center_x': .4, 'center_y': .76},
                                  text='Feito')
         box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .76})
+        self.menuRua = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),
+                               self.db.ruasDisponiveis())
+
         box.bind(active=self.selecionarNome)
         self.rl.add_widget(labelToRemove)
         self.listaWidget.append(labelToRemove)
         self.rl.add_widget(box)
         self.listaWidget.append(box)
-        self.rl.add_widget(menuRua)
-        self.listaWidget.append(menuRua)
-        self.bd = bd
-        self.menuRua = menuRua
+        self.rl.add_widget(self.menuRua)
+        self.listaWidget.append(self.menuRua)
         self.buttonRemove = buttonRemove
-        self.widgetsNovo = [labelToRemove,box,menuRua]
+        self.widgetsNovo = [labelToRemove,box,self.menuRua]
     
     def selecionarNome(self,checkbox,value):
         nomeRua = self.menuRua.text
         self.removeWidgetsByList(self.widgetsNovo)
         if value and nomeRua != "Selecione a rua do dizimista":
-            menuDizimistas = Menu('Selecione um dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),['Teste1','Teste2'])#self.bd.dizimistasRua(nomeRua))
+            self.menuDizimistas = Menu('Selecione um dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),self.db.dizimistasRua(nomeRua))
             labelToRemove = Label(color='black', size_hint=(.2, .05),
                                  pos_hint={'center_x': .4, 'center_y': .76},
                                  text='Feito')
@@ -580,8 +628,8 @@ class widgetsBloco(Widget):
             box.bind(active=self.removerDizimista)
             self.widgetsNovo.append(labelToRemove)
             self.widgetsNovo.append(box)
-            self.widgetsNovo.append(menuDizimistas)
-            self.rl.add_widget(menuDizimistas)
+            self.widgetsNovo.append(self.menuDizimistas)
+            self.rl.add_widget(self.menuDizimistas)
             self.rl.add_widget(labelToRemove)
             self.rl.add_widget(box)
         
@@ -599,10 +647,24 @@ class widgetsBloco(Widget):
     def removerDizimista(self,checkbox,value):
         self.removeWidgetsByList(self.widgetsNovo)
         if value:
-            # Colocar aqui a impressão das informações do dizimista e o botão de remover
-            pass
+            dadosDizimista = self.menuDizimistas.text.split("-")
+            if self.menuDizimistas.text == "Selecione um dizimista":
+                error = Mensagem(error=True)
+                error.addMensagem("Não foi selecionado um dizimista",{'center_x': .65, 'center_y': .76})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+            else:
+                nome = dadosDizimista[0]
+                numero = dadosDizimista[1]
+                infoDizimista = self.db.getDizimista(nome,self.menuRua.text,numero)
+                # mostrar informações do dizimista
+                
         else:
-            pass
+            self.removeWidgetsByList(self.widgetsNovo)
+    
+    def remover(self,obj):
+        pass
 
     def removeWidgetsByList(self,widgets:list):
         for widget in widgets:
@@ -644,6 +706,22 @@ class widgetsBloco(Widget):
         self.removeWidgetsByList(self.listaWidget)
 
 
+class infoDizimista(Widget):
+    def __init__(self,rl:RelativeLayout,pos_hint:dict, **kwargs):
+        super().__init__(**kwargs)
+        self.rl = rl
+        self.listaWidget = list()
+        self.erro = False
+        self.pos = pos_hint
+    
+    def showInfo(self,nomeDizimista:str,numeroCasa:str,dataAniver:str,nomeRua:str):
+        labelInit = Label(color='black',size_hint=(.2, .05),
+                               pos_hint=self.pos,
+                      text='_____________ informações _____________')
+        
+        labelNome = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': self.pos['center_x'], 'center_y':self.pos['center_y']-0.02},
+                      text='_____________ informações _____________')
 
 class blocoTela(Screen):
     def __init__(self,user:User,nomeRua:str,**kwargs):

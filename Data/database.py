@@ -7,6 +7,11 @@ from Data.user import User
 def transform(listWithTuple:list)->list:
     return [tupla[0] for tupla in listWithTuple]
 
+def concat(listOfDizimist:list)->list:
+    lista = list()
+    for dizimista in listOfDizimist:
+        lista.append(f"{dizimista[0]} - {dizimista[1]}")
+    return lista
 
 class BancodeDados:
     def __init__(self,nome:str):
@@ -191,12 +196,13 @@ class BancodeDados:
         ).fetchall()
     
     def dizimistasRua(self,nomeRua:str)->list:
-        return transform(self.cmd.execute(
+        infos = self.cmd.execute(
             """
-                SELECT nome from dizimista
+                SELECT nome,nCasa from dizimista
                 WHERE nRua = ?;
             """,(nomeRua,)
-        ).fetchall())
+        ).fetchall()
+        return concat(infos)
 
     def ruasDisponiveis(self)->list:
         return transform(self.cmd.execute(
