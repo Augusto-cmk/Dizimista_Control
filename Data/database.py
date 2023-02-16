@@ -10,7 +10,13 @@ def transform(listWithTuple:list)->list:
 def concat(listOfDizimist:list)->list:
     lista = list()
     for dizimista in listOfDizimist:
-        lista.append(f"{dizimista[0]} - {dizimista[1]}")
+        string = ''
+        for i,param in enumerate(dizimista):
+            string += param
+            if i != len(dizimista) - 1 :
+                string+=' - '
+
+        lista.append(string)
     return lista
 
 class BancodeDados:
@@ -197,7 +203,21 @@ class BancodeDados:
                 SELECT * from dizimista where nome = ?;
             """,(nomeDizimista,)
         ).fetchall()
+
+    def dizimistas(self):
+        return concat(self.cmd.execute(
+            """
+                SELECT nome,nCasa from dizimista;
+            """
+        ).fetchall())
     
+    def dizimistasAll(self):
+        return concat(self.cmd.execute(
+            """
+                SELECT nome,nCasa,nRua from dizimista;
+            """
+        ).fetchall())
+
     def dizimistasRua(self,nomeRua:str)->list:
         infos = self.cmd.execute(
             """

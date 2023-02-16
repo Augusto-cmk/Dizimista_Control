@@ -6,7 +6,7 @@ from kivy.uix.checkbox import CheckBox
 from Visao.recursos.mensagem import Mensagem
 from kivy.uix.screenmanager import Screen
 from Data.conexao import test_conexao
-from Visao.recursos.funcoes import remvDofim,verificaIntegridadeSenha,obterIP,checkboxList
+from Visao.recursos.funcoes import remvDofim,verificaIntegridadeSenha,obterIP,checkboxList,checkboxListUniqueMark
 from Visao.recursos.botoesAuxiliares import Menu
 from Data.send import envioEmail,gerarNumero
 from kivy.uix.image import Image
@@ -20,6 +20,8 @@ from Data.user import User
 from Data.database import BancodeDados
 from modelo.dizimista import dizimista
 from modelo.rua import Rua
+from Data.treeSearch import S_tree
+
 class Fundo(Widget):
     def __init__(self,tam_x,tam_y,cor,pos_x=None,pos_y=None, **kwargs):
         super().__init__(**kwargs)
@@ -324,9 +326,7 @@ class TelaCadastro(Screen):
 class TelaPrincipal(Screen):
     def __init__(self,user:User,**kw):
         super().__init__(**kw)
-
-
-        ## Colocar por defaut a tela de buscar um dizimista pelo nome no banco de dados para ver se o mesmo já existe
+        self.buscaRemovida = False
         self.db = BancodeDados(user.getComunidade())
         self.rl = RelativeLayout(size=(300, 300))
         self.mensagemError = Mensagem(error=True)
@@ -356,38 +356,38 @@ class TelaPrincipal(Screen):
                         pos_hint={'center_x': .05, 'center_y': 0.96},
                         text="Sair", on_press=self.sair)
 
-        limparTela = Button(size_hint = (.18,.05),pos_hint={'center_x': .105,'center_y':0.76},text='Limpar tela',on_press=self.limpartela)
-        visualizarDizimistas = Menu('Opções de visualização',{'center_x': .105, 'center_y': 0.68},(.2,.05),
+        limparTela = Button(size_hint = (.18,.05),pos_hint={'center_x': .105,'center_y':0.76},text='Tela inicial',on_press=self.limpartela)
+        visualizarDizimistas = Menu('Opções de visualização',{'center_x': .87, 'center_y': 0.76},(.2,.05),
                                     ['Todos os dizimistas','Contribuintes','Não contribuintes'])
         # Utilizar gráficos demonstrativos para explicar de forma resumida como estão todos os dizimistas em relação a contribuição
 
         ver = Button(size_hint=(.18, .05),
-                                      pos_hint={'center_x': .105, 'center_y': 0.6},
+                                      pos_hint={'center_x': .87, 'center_y': 0.61},
                                       text="Visualizar")
 
         adicionarDizimista = Button(size_hint=(.18, .05),
-                                      pos_hint={'center_x': .105, 'center_y': 0.4},
+                                      pos_hint={'center_x': .105, 'center_y': 0.6},
                                       text="Adicionar dizimista",on_press = self.telaadd)
 
-        removerDizimista = Button(size_hint=(.18, .05),
-                                      pos_hint={'center_x': .105, 'center_y': 0.3},
-                                      text="Remover dizimista",on_press=self.telaRemove)
-
         marcarContribuintes  = Button(size_hint=(.18, .05),
-                                      pos_hint={'center_x': .105, 'center_y': 0.2},
+                                      pos_hint={'center_x': .105, 'center_y': 0.68},
                                       text="Marcar contribuites",on_press=self.selecMark)
 
-        alterar = Button(size_hint=(.18, .05),
-                                     pos_hint={'center_x': .105, 'center_y': 0.1},
-                                     text="Alterar dados")
+        self.paramBusca = TextInput(size_hint=(.3, .05),
+                                       pos_hint={'center_x': .47, 'center_y': .76}, multiline=False)
 
+        self.searchButton = Button(size_hint=(.08, .05),
+                                     pos_hint={'center_x': .67, 'center_y': .76},
+                                     text="Buscar",on_press=self.marcarBusca)
+        
+        self.widgetsBusca = [self.paramBusca,self.searchButton,ver,visualizarDizimistas]
 
         self.rl.add_widget(imagem)
+        self.rl.add_widget(self.paramBusca)
+        self.rl.add_widget(self.searchButton)
         self.rl.add_widget(limparTela)
-        self.rl.add_widget(alterar)
         self.rl.add_widget(ver)
         self.rl.add_widget(marcarContribuintes)
-        self.rl.add_widget(removerDizimista)
         self.rl.add_widget(adicionarDizimista)
         self.rl.add_widget(visualizarDizimistas)
         self.rl.add_widget(dataHoraLogin)
@@ -397,22 +397,38 @@ class TelaPrincipal(Screen):
         self.rl.add_widget(labelNomeComunidade)
         self.rl.add_widget(sair)
 
-
         self.add_widget(self.rl)
 
+    def marcarBusca(self,obj):
+        bloco = searchDizimizta(self.user)
+        bloco.telaMarcar(0.8, 0.65,self.paramBusca.text)
+        self.rl.clear_widgets()
+        self.add_widget(bloco)
+
     def limpartela(self,obj):
+        if self.buscaRemovida:
+            for widget in self.widgetsBusca:
+                self.rl.add_widget(widget)
+        self.buscaRemovida = False
         self.bloco.limparWidgets()
 
-    def telaRemove(self,obj):
+    def telaRemove(self,obj): ## Usar de parâmetro para criar o método na nova implementação
         if self.bloco.erro:
             self.bloco.limparWidgets()
-        
+        for widget in self.widgetsBusca:
+            self.rl.remove_widget(widget)
         self.bloco.blocoRemoverDizimista(self.user)
     
     def telaadd(self,obj):
+        self.buscaRemovida = True
+        for widget in self.widgetsBusca:
+            self.rl.remove_widget(widget)
         self.bloco.blocoAdicionarDizimista(self.user)
 
     def selecMark(self,obj):
+        self.buscaRemovida = True
+        for widget in self.widgetsBusca:
+            self.rl.remove_widget(widget)
         self.ruaSelecao = Menu('Selecione uma rua', {'center_x': .55, 'center_y': .5}, (.28, .05),self.db.ruasDisponiveis())
         self.bloco.blocoMarcarContribuintes(self.ruaSelecao,Button(size_hint=(.2, .05),
                                pos_hint={'center_x': .82, 'center_y': .5},
@@ -606,26 +622,18 @@ class widgetsBloco(Widget):
     def blocoRemoverDizimista(self,user:User):
         self.limparWidgets()
         self.db = BancodeDados(user.getComunidade())
-        buttonRemove = Button(size_hint=(.18, .05),
+        self.buttonRemove = Button(size_hint=(.18, .05),
                                      pos_hint={'center_x': .65, 'center_y': .55},
                                      text="Remover",on_press=self.remover)
-        labelToRemove = Label(color='black', size_hint=(.2, .05),
-                                 pos_hint={'center_x': .4, 'center_y': .76},
-                                 text='Feito')
-        box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .76})
-        self.menuRua = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),
-                               self.db.ruasDisponiveis())
+        
+        # self.nome = remvDofim(dadosDizimista[0])
+        # self.numero = remvDofim(dadosDizimista[1])
+        # infodizimista = self.db.getDizimista(self.nome,self.menuRua.text,self.numero)
+        # self.infodiz.showInfo({'center_x': .65, 'center_y': .76},infodizimista[1],infodizimista[2],infodizimista[3],infodizimista[4]) 
+        # self.removeWidgetsByList(self.widgetsNovo)
+        # self.rl.add_widget(self.buttonRemove)
+        # self.listaWidget.append(self.buttonRemove)
 
-        box.bind(active=self.selecionarNome)
-        self.rl.add_widget(labelToRemove)
-        self.listaWidget.append(labelToRemove)
-        self.rl.add_widget(box)
-        self.listaWidget.append(box)
-        self.rl.add_widget(self.menuRua)
-        self.listaWidget.append(self.menuRua)
-        self.buttonRemove = buttonRemove
-        self.widgetsNovo = [labelToRemove,box,self.menuRua]
-    
     def selecionarNome(self,checkbox,value):
         nomeRua = self.menuRua.text
         self.removeWidgetsByList(self.widgetsNovo)
@@ -678,6 +686,7 @@ class widgetsBloco(Widget):
                 self.listaWidget.append(self.buttonRemove)
                 
         else:
+            self.infodiz.limparInfo()
             self.removeWidgetsByList(self.widgetsNovo)
     
     def remover(self,obj):
@@ -727,7 +736,49 @@ class widgetsBloco(Widget):
 
 
     def limparWidgets(self):
+        self.infodiz.limparInfo()
         self.removeWidgetsByList(self.listaWidget)
+
+class searchDizimizta(Screen):
+    def __init__(self,user:User,**kwargs):
+        super().__init__(**kwargs)
+        self.user = user
+        self.db = BancodeDados(self.user.getComunidade())
+        self.tree = S_tree()
+        self.tree.addList(self.db.dizimistasAll())
+        self.checkBoxes = None
+
+    def telaMarcar(self,pos_x:int,pos_y:int,param:str):
+        self.alterar = Button(text="Alterar dizimista",on_press=self.alterarDizimista)
+        self.remover = Button(text="Remover dizimista",on_press=self.removerDizimista)
+        self.checkBoxes = checkboxListUniqueMark(pos_x, pos_y, self.tree.obterCorrespondencias(param))
+        self.add_widget(caixaRolagemBusca(self.alterar,self.remover,self.checkBoxes,self.user))
+
+
+    def alterarDizimista(self,obj):
+        selecionado = self.checkBoxes.getNomesAtivos()
+        if selecionado != None:
+            print(selecionado)
+            diz = selecionado.split('-')
+            nome = remvDofim(diz[0])
+            nCasa = remvDofim(diz[1])
+            nomeRua = remvDofim(diz[2])
+
+            # self.clear_widgets()
+            # self.add_widget(TelaPrincipal(self.user))
+    
+    def removerDizimista(self,obj):
+        selecionado = self.checkBoxes.getNomesAtivos()
+        if selecionado != None:
+            print(selecionado)
+            diz = selecionado.split('-')
+            nome = remvDofim(diz[0])
+            nCasa = remvDofim(diz[1])
+            nomeRua = remvDofim(diz[2])
+
+            # self.clear_widgets()
+            # self.add_widget(TelaPrincipal(self.user))
+
 
 
 class infoDizimista(Widget):
@@ -831,6 +882,43 @@ class caixaRolagem(Screen):
         rl.add_widget(scroll)
         rl.add_widget(buttonVoltar)
         rl.add_widget(buttonFeito)
+        self.add_widget(rl)
+
+    def voltar(self,obj):
+        self.clear_widgets()
+        self.add_widget(TelaPrincipal(self.user))
+
+
+class caixaRolagemBusca(Screen):
+    def __init__(self,buttonAlterar:Button,buttonRemover:Button,listaWidgets:list,user,**kwargs):
+        super().__init__(**kwargs)
+        self.user = user
+
+        rl = RelativeLayout()
+
+        scroll = ScrollView()
+        buttonAlterar.pos_hint = {'center_x': 0.1, 'center_y': 0.1}
+        buttonAlterar.size_hint = (0.15, 0.05)
+
+        buttonRemover.pos_hint = {'center_x': 0.268, 'center_y': 0.1}
+        buttonRemover.size_hint = (0.17, 0.05)
+
+        buttonVoltar = Button(size_hint = (.08, .05),pos_hint={'center_x': 0.40, 'center_y': 0.1},text='Voltar',on_press=self.voltar,height=40)
+
+        layout = GridLayout(cols=2,spacing=10,size_hint_y=None,row_force_default=True,row_default_height=60,padding=100)
+        layout.bind(minimum_height = layout.setter('height'))
+
+
+
+        for widget in listaWidgets:
+            layout.add_widget(widget)
+
+        scroll.bar_width = 10
+        scroll.add_widget(layout)
+        rl.add_widget(scroll)
+        rl.add_widget(buttonVoltar)
+        rl.add_widget(buttonAlterar)
+        rl.add_widget(buttonRemover)
         self.add_widget(rl)
 
     def voltar(self,obj):

@@ -76,3 +76,42 @@ class checkboxList(list):
 
     def getNomesAtivos(self):
         return self.ativados
+
+
+class checkboxListUniqueMark(list): #Ao marcar um checkbox, os demais devem ser desmarcados
+    def __init__(self,pos_x,pos_y,listaNomes):
+        super().__init__()
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.ativado = None
+        self.checkboxActive = [None]
+        for nome in listaNomes:
+            self.inserir(nome)
+
+    def inserir(self,string):
+        pos = self.pos_y - len(self)/50
+        self.append(Label(pos_hint={'center_x': self.pos_x-0.3, 'center_y': pos}, text=string))
+        check = CheckBox(pos_hint={'center_x': self.pos_x, 'center_y': pos})
+        check.bind(active=self.ativo)
+        self.append(check)
+
+    def ativo(self,checkbox,value):
+        if value != False and checkbox != self.checkboxActive[0]:
+            self.__desative()
+            for i in range(len(self)):
+                if checkbox == self[i] and value:
+                    self.ativado = self[i-1].text
+                    self.checkboxActive[0] = checkbox
+                    break
+        elif value == False and checkbox == self.checkboxActive[0]:
+            self.ativado = None
+
+
+    
+    def __desative(self):
+        if self.checkboxActive[0] != None:
+            self.checkboxActive[0].state = 'normal'
+
+
+    def getNomesAtivos(self):
+        return self.ativado
