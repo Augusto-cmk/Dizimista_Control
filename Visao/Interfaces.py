@@ -324,15 +324,20 @@ class TelaCadastro(Screen):
 
 
 class TelaPrincipal(Screen):
-    def __init__(self,user:User,**kw):
+    def __init__(self,user:User,typeBloco:str = None,diz:dizimista = None,**kw):
         super().__init__(**kw)
+        
+        self.typeBloco = typeBloco
+        self.diz = diz
+
+
         self.buscaRemovida = False
         self.db = BancodeDados(user.getComunidade())
         self.rl = RelativeLayout(size=(300, 300))
         self.mensagemError = Mensagem(error=True)
         self.user = user
         self.ruaSelecao = None
-
+        
         self.bloco = widgetsBloco(self.rl)
 
         imagem = Image(source='imagens/fundo-de-formas-abstratas-brancas_79603-1362.avif', pos_hint={'center_x': .5, 'center_y': .5})
@@ -399,6 +404,12 @@ class TelaPrincipal(Screen):
 
         self.add_widget(self.rl)
 
+        if self.typeBloco == 'remover':
+            self.telaRemove()
+        
+        if self.typeBloco == 'alterar':
+            pass
+
     def marcarBusca(self,obj):
         bloco = searchDizimizta(self.user)
         bloco.telaMarcar(0.8, 0.65,self.paramBusca.text)
@@ -412,23 +423,22 @@ class TelaPrincipal(Screen):
         self.buscaRemovida = False
         self.bloco.limparWidgets()
 
-    def telaRemove(self,obj): ## Usar de parâmetro para criar o método na nova implementação
+    def telaRemove(self): ## Usar de parâmetro para criar o método na nova implementação
+        self.typeBloco = None
+        self.buscaRemovida = True
         if self.bloco.erro:
             self.bloco.limparWidgets()
-        for widget in self.widgetsBusca:
-            self.rl.remove_widget(widget)
-        self.bloco.blocoRemoverDizimista(self.user)
+        self.limparBusca()
+        self.bloco.blocoRemoverDizimista(self.user,self.diz)
     
     def telaadd(self,obj):
         self.buscaRemovida = True
-        for widget in self.widgetsBusca:
-            self.rl.remove_widget(widget)
+        self.limparBusca()
         self.bloco.blocoAdicionarDizimista(self.user)
 
     def selecMark(self,obj):
         self.buscaRemovida = True
-        for widget in self.widgetsBusca:
-            self.rl.remove_widget(widget)
+        self.limparBusca()
         self.ruaSelecao = Menu('Selecione uma rua', {'center_x': .55, 'center_y': .5}, (.28, .05),self.db.ruasDisponiveis())
         self.bloco.blocoMarcarContribuintes(self.ruaSelecao,Button(size_hint=(.2, .05),
                                pos_hint={'center_x': .82, 'center_y': .5},
@@ -452,6 +462,10 @@ class TelaPrincipal(Screen):
             bloco.telaMarcar(0.8, 0.65, nomesDizimistas,getMes())
             self.rl.clear_widgets()
             self.add_widget(bloco)
+
+    def limparBusca(self):
+        for widget in self.widgetsBusca:
+            self.rl.remove_widget(widget)
 
     def sair(self,obj):
         self.clear_widgets()
@@ -619,82 +633,24 @@ class widgetsBloco(Widget):
 
 
     
-    def blocoRemoverDizimista(self,user:User):
+    def blocoRemoverDizimista(self,user:User,diz:dizimista):
         self.limparWidgets()
+        self.diz = diz
         self.db = BancodeDados(user.getComunidade())
         self.buttonRemove = Button(size_hint=(.18, .05),
                                      pos_hint={'center_x': .65, 'center_y': .55},
                                      text="Remover",on_press=self.remover)
-        
-        # self.nome = remvDofim(dadosDizimista[0])
-        # self.numero = remvDofim(dadosDizimista[1])
-        # infodizimista = self.db.getDizimista(self.nome,self.menuRua.text,self.numero)
-        # self.infodiz.showInfo({'center_x': .65, 'center_y': .76},infodizimista[1],infodizimista[2],infodizimista[3],infodizimista[4]) 
-        # self.removeWidgetsByList(self.widgetsNovo)
-        # self.rl.add_widget(self.buttonRemove)
-        # self.listaWidget.append(self.buttonRemove)
 
-    def selecionarNome(self,checkbox,value):
-        nomeRua = self.menuRua.text
-        self.removeWidgetsByList(self.widgetsNovo)
-        if value and nomeRua != "Selecione a rua do dizimista":
-            self.menuDizimistas = Menu('Selecione um dizimista', {'center_x': .65, 'center_y': .76}, (.28, .05),self.db.dizimistasRua(nomeRua))
-            labelToRemove = Label(color='black', size_hint=(.2, .05),
-                                 pos_hint={'center_x': .4, 'center_y': .76},
-                                 text='Feito')
-            box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .76})
-            box.bind(active=self.removerDizimista)
-            self.widgetsNovo.append(labelToRemove)
-            self.widgetsNovo.append(box)
-            self.widgetsNovo.append(self.menuDizimistas)
-            self.rl.add_widget(self.menuDizimistas)
-            self.rl.add_widget(labelToRemove)
-            self.rl.add_widget(box)
-            self.listaWidget.append(self.menuDizimistas)
-            self.listaWidget.append(labelToRemove)
-            self.listaWidget.append(box)
-        
-        elif nomeRua == "Selecione a rua do dizimista":
-            self.erro = True
-            self.removeWidgetsByList(self.widgetsNovo)
-            mensagem = Mensagem(error=True)
-            mensagem.addMensagem("Não foi selecionada uma rua, favor tentar novamente !!",pos_hint={'center_x': .65, 'center_y': .76})
-            self.rl.add_widget(mensagem)
-            self.listaWidget.append(mensagem)
-        
-        else:
-            self.removeWidgetsByList(self.widgetsNovo)
-    
-    def removerDizimista(self,checkbox,value):
-        self.removeWidgetsByList(self.widgetsNovo)
-        self.infodiz.limparInfo()
-        if value:
-            dadosDizimista = self.menuDizimistas.text.split("-")
-            if self.menuDizimistas.text == "Selecione um dizimista":
-                error = Mensagem(error=True)
-                error.addMensagem("Não foi selecionado um dizimista",{'center_x': .65, 'center_y': .76})
-                self.rl.add_widget(error)
-                self.widgetsNovo.append(error)
-                self.listaWidget.append(error)
-            else:
-                self.nome = remvDofim(dadosDizimista[0])
-                self.numero = remvDofim(dadosDizimista[1])
-                infodizimista = self.db.getDizimista(self.nome,self.menuRua.text,self.numero)
-                self.infodiz.showInfo({'center_x': .65, 'center_y': .76},infodizimista[1],infodizimista[2],infodizimista[3],infodizimista[4]) 
-                self.removeWidgetsByList(self.widgetsNovo)
-                self.rl.add_widget(self.buttonRemove)
-                self.listaWidget.append(self.buttonRemove)
-                
-        else:
-            self.infodiz.limparInfo()
-            self.removeWidgetsByList(self.widgetsNovo)
+        infodizimista = self.db.getDizimista(diz.getNome(),diz.getRua(),diz.getNCasa())
+        self.infodiz.showInfo({'center_x': .65, 'center_y': .76},infodizimista[1],infodizimista[2],infodizimista[3],infodizimista[4])
+        self.rl.add_widget(self.buttonRemove)
+        self.listaWidget.append(self.buttonRemove)
     
     def remover(self,obj):
-        self.db.removerDizimista(self.nome,self.numero,self.menuRua.text)
+        self.db.removerDizimista(self.diz.getNome(),self.diz.getNCasa(),self.diz.getRua())
         sucesso = Mensagem(sucesso=True)
         sucesso.addMensagem("Dizimista removido com sucesso!",{'center_x': .65, 'center_y': .45})
         self.rl.add_widget(sucesso)
-        self.widgetsNovo.append(sucesso)
         self.listaWidget.append(sucesso)
         for widget in self.infodiz.listaWidget:
             self.listaWidget.append(widget)
@@ -770,14 +726,12 @@ class searchDizimizta(Screen):
     def removerDizimista(self,obj):
         selecionado = self.checkBoxes.getNomesAtivos()
         if selecionado != None:
-            print(selecionado)
             diz = selecionado.split('-')
             nome = remvDofim(diz[0])
             nCasa = remvDofim(diz[1])
             nomeRua = remvDofim(diz[2])
-
-            # self.clear_widgets()
-            # self.add_widget(TelaPrincipal(self.user))
+            self.clear_widgets()
+            self.add_widget(TelaPrincipal(self.user,typeBloco='remover',diz=dizimista(nome,nomeRua,nCasa)))
 
 
 
