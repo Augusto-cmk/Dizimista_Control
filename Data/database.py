@@ -227,7 +227,7 @@ class BancodeDados:
         ).fetchall()
         return concat(infos)
 
-    def naoContribuintesRua(self,mes:str,ano:str,nomeRua:str)->list:
+    def naoContribuintesRua(self,mes:str,ano:str,nomeRua:str)->list: ## Não armazenar o Id mas sim o nome do dizmista
         contribuintes = np.array(transform(self.cmd.execute(
             """
                 SELECT idDizimista from doacao
@@ -382,4 +382,5 @@ class BancodeDados_cadastro:
 
 
 teste = BancodeDados("Comunidade")
-print(teste.doacoesDizimista("Pedro Maia",'Luiz Murat','186','2023'))
+teste.criar()
+# print(teste.doacoesDizimista("Pedro Maia",'Luiz Murat','186','2023'))
