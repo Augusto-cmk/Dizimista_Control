@@ -690,6 +690,43 @@ class widgetsBloco(Widget):
             self.novaRuaInserida = False
             self.removeWidgetsByList(self.widgetsNovo)
 
+    def blocoAlterarDizimista(self,nome:str,rua:str,aniversario:str,nCasa:str): ## Tem que terminar o bloco de alterar dizimista
+        self.limparWidgets()
+        labelNome = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .46, 'center_y': .65},
+                      text='Nome do dizimista')
+
+        self.textNomeDizimista = TextInput(size_hint=(.2, .05),
+                                   pos_hint={'center_x': .7, 'center_y': .65}, multiline=False,text=nome)
+
+        labelNumero = Label(color='black', size_hint=(.2, .05),
+                          pos_hint={'center_x': .467, 'center_y': .58},
+                          text='Número da casa')
+
+        self.textNumeroDizimista = TextInput(size_hint=(.2, .05),
+                                   pos_hint={'center_x': .7, 'center_y': .58}, multiline=False,text=nCasa)
+
+
+        labelAniversario = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .46, 'center_y': .51},
+                      text='Data de aniversário')
+
+        self.textAniversarioDia = TextInput(size_hint=(.04, .045),
+                                   pos_hint={'center_x': .619, 'center_y': .51}, multiline=False,text=aniversario[:2])
+
+        labelBarra = Label(color='black', size_hint=(.2, .05),
+                                 pos_hint={'center_x': .649, 'center_y': .51},
+                                 text='/')
+
+        self.textAniversarioMes = TextInput(size_hint=(.04, .045),
+                                         pos_hint={'center_x': .679, 'center_y': .51}, multiline=False,text=aniversario[2:])
+
+        self.labelNomeRua = Label(color='black', size_hint=(.2, .05),
+                                  pos_hint={'center_x': .46, 'center_y': .3},
+                                  text='Nome da rua')
+
+        self.textInNome = TextInput(size_hint=(.2, .05),
+                                    pos_hint={'center_x': .7, 'center_y': .3}, multiline=False,text=nome)
 
     def limparWidgets(self):
         self.infodiz.limparInfo()

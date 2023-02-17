@@ -4,7 +4,7 @@ from Data.user import User
 # consulta = http://pythonclub.com.br/gerenciando-banco-dados-sqlite3-python-parte1.html
 # Dados = https://docs.google.com/spreadsheets/d/1_HBwd5AdT7gH_P5IoNFRyOkfJZmTLLPD/edit#gid=11936601
 
-def transform(listWithTuple:list)->list:
+def transform(listWithTuple:tuple)->list:
     return [tupla[0] for tupla in listWithTuple]
 
 def concat(listOfDizimist:list)->list:
@@ -25,12 +25,12 @@ class BancodeDados:
         self.conn = sqlite3.connect(f"{nome}.db")
         self.cmd = self.conn.cursor()
     
-    def __obterIds(self,table:str,nomeId:str):
+    def __obterIds(self):
         return self.cmd.execute(
             f"""
-              SELECT {nomeId} from {table};
+            SELECT lastIDdizimista, lastIDdoacao, lastIDrua FROM lastIDS where idTable = 255;
             """
-        )
+        ).fetchall()[0]
     def __getIdDizimista(self,nome:str,nCasa:str,nomeRua:str)->int:
         try:
             return self.cmd.execute(
@@ -42,10 +42,14 @@ class BancodeDados:
         except IndexError:
             return None
 
-    def __getnewID(self,table:str,nomeId:str)->int:
+    def __getnewID(self,nomeId:str)->int:
         try:
-            id = np.array(transform(self.__obterIds(table,nomeId).fetchall())).max()
+            ids = self.__obterIds()
+            dic = {'idDizimista':ids[0],'idDoacao':ids[1],'idRua':ids[2]}
+            dic2 = {'idDizimista':'lastIDdizimista','idRua':'lastIDrua','idDoacao':'lastIDdoacao'}
+            id = dic[nomeId]
             if id >=0:
+                self.__alterarId(dic2[nomeId],id+1)
                 return int(id+1)
             else:
                 return 0
@@ -91,9 +95,18 @@ class BancodeDados:
             """
             CREATE TABLE IF NOT EXISTS lastIDS (
                     lastIDdizimista int,
-                    lastIDdoacao int
+                    lastIDdoacao int,
+                    lastIDrua int,
+                    idTable int,
+                    primary key(idTable)
                 );
             """
+        )
+        self.cmd.execute(
+             """
+                    INSERT INTO lastIDS(lastIDdizimista,lastIDdoacao,lastIDrua,idTable)
+                    values(?,?,?,?);
+                """,(0,0,0,255,)
         )
         self.conn.commit()
     def marcarContribuinte(self,nomeDizimista:str,nomeRua:str,nCasa:str,mesContribuido:str,anoContribuicao:str)->bool:
@@ -103,7 +116,7 @@ class BancodeDados:
                 """
                     INSERT INTO doacao(idDoacao,idDizimista,mesContribuicao,anoContribuicao)
                     values(?,?,?,?);
-                """,(self.__getnewID("doacao","idDoacao"),idDizimista,mesContribuido,anoContribuicao,)
+                """,(self.__getnewID("idDoacao"),idDizimista,mesContribuido,anoContribuicao,)
             )
             self.conn.commit()
             return True
@@ -133,7 +146,7 @@ class BancodeDados:
                 f"""
                     INSERT INTO dizimista(idDizimista,nome,nCasa,aniversario,nRua)
                     values(?,?,?,?,?);
-                """,(self.__getnewID("dizimista","idDizimista"),nome,nCasa,dataNiver,nomeRua,)
+                """,(self.__getnewID("idDizimista"),nome,nCasa,dataNiver,nomeRua,)
             )
             self.conn.commit()
             return True
@@ -201,7 +214,7 @@ class BancodeDados:
                 """
                     INSERT INTO rua(idRua,nomeRua,zelador)
                     values(?,?,?);
-                """,(self.__getnewID("rua","idRua"),nomeRua,zelador,)
+                """,(self.__getnewID("idRua"),nomeRua,zelador,)
             )
             self.conn.commit()
     
@@ -283,6 +296,14 @@ class BancodeDados:
             ).fetchall()[0]
         except IndexError:
             return None
+
+    def __alterarId(self,nomeId:str,novoId:int):
+        self.cmd.execute(
+            f"""
+                UPDATE lastIDS set {nomeId} = ? where idTable = 255;
+            """,(novoId,)
+        )
+        self.conn.commit()
     
     def __alterar(self,nomeTabela:str,nomeColuna:str,nomeIdentificador:str,identificador:str,novoAtributo:str):
         self.cmd.execute(
@@ -389,6 +410,5 @@ class BancodeDados_cadastro:
         return User(info[0],info[1])
 
 
-teste = BancodeDados("Comunidade")
-teste.criar()
-# print(teste.doacoesDizimista("Pedro Maia",'Luiz Murat','186','2023'))
+# teste = BancodeDados("Comunidade")
+# teste.criar()
