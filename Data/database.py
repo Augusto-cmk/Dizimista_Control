@@ -87,6 +87,14 @@ class BancodeDados:
                 );
             """
         )
+        self.cmd.execute( ## criando uma nova coluna para armazenar os ultimos ids usados para não gerar novos ids
+            """
+            CREATE TABLE IF NOT EXISTS lastIDS (
+                    lastIDdizimista int,
+                    lastIDdoacao int
+                );
+            """
+        )
         self.conn.commit()
     def marcarContribuinte(self,nomeDizimista:str,nomeRua:str,nCasa:str,mesContribuido:str,anoContribuicao:str)->bool:
         try:
@@ -227,7 +235,7 @@ class BancodeDados:
         ).fetchall()
         return concat(infos)
 
-    def naoContribuintesRua(self,mes:str,ano:str,nomeRua:str)->list: ## Não armazenar o Id mas sim o nome do dizmista
+    def naoContribuintesRua(self,mes:str,ano:str,nomeRua:str)->list:
         contribuintes = np.array(transform(self.cmd.execute(
             """
                 SELECT idDizimista from doacao
