@@ -408,7 +408,7 @@ class TelaPrincipal(Screen):
             self.telaRemove()
         
         if self.typeBloco == 'alterar':
-            pass
+            self.telaAltera()
 
     def marcarBusca(self,obj):
         bloco = searchDizimizta(self.user)
@@ -423,7 +423,15 @@ class TelaPrincipal(Screen):
         self.buscaRemovida = False
         self.bloco.limparWidgets()
 
-    def telaRemove(self): ## Usar de parâmetro para criar o método na nova implementação
+    def telaAltera(self):
+        self.typeBloco = None
+        self.buscaRemovida = True
+        if self.bloco.erro:
+            self.bloco.limparWidgets()
+        self.limparBusca()
+        self.bloco.blocoAlterarDizimista(self.user,self.diz)
+
+    def telaRemove(self):
         self.typeBloco = None
         self.buscaRemovida = True
         if self.bloco.erro:
@@ -690,21 +698,23 @@ class widgetsBloco(Widget):
             self.novaRuaInserida = False
             self.removeWidgetsByList(self.widgetsNovo)
 
-    def blocoAlterarDizimista(self,nome:str,rua:str,aniversario:str,nCasa:str): ## Tem que terminar o bloco de alterar dizimista
+    def blocoAlterarDizimista(self,user:User,diz:dizimista): ## Tem que terminar o bloco de alterar dizimista
         self.limparWidgets()
+        self.dizimistaAltera = diz
+        self.db = BancodeDados(user.getComunidade())
         labelNome = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .46, 'center_y': .65},
                       text='Nome do dizimista')
 
         self.textNomeDizimista = TextInput(size_hint=(.2, .05),
-                                   pos_hint={'center_x': .7, 'center_y': .65}, multiline=False,text=nome)
+                                   pos_hint={'center_x': .7, 'center_y': .65}, multiline=False,text=diz.getNome())
 
         labelNumero = Label(color='black', size_hint=(.2, .05),
                           pos_hint={'center_x': .467, 'center_y': .58},
                           text='Número da casa')
 
         self.textNumeroDizimista = TextInput(size_hint=(.2, .05),
-                                   pos_hint={'center_x': .7, 'center_y': .58}, multiline=False,text=nCasa)
+                                   pos_hint={'center_x': .7, 'center_y': .58}, multiline=False,text=diz.getNCasa())
 
 
         labelAniversario = Label(color='black',size_hint=(.2, .05),
@@ -712,21 +722,56 @@ class widgetsBloco(Widget):
                       text='Data de aniversário')
 
         self.textAniversarioDia = TextInput(size_hint=(.04, .045),
-                                   pos_hint={'center_x': .619, 'center_y': .51}, multiline=False,text=aniversario[:2])
+                                   pos_hint={'center_x': .619, 'center_y': .51}, multiline=False,text=diz.getAniversario()[:2])
 
         labelBarra = Label(color='black', size_hint=(.2, .05),
                                  pos_hint={'center_x': .649, 'center_y': .51},
                                  text='/')
 
         self.textAniversarioMes = TextInput(size_hint=(.04, .045),
-                                         pos_hint={'center_x': .679, 'center_y': .51}, multiline=False,text=aniversario[2:])
+                                         pos_hint={'center_x': .679, 'center_y': .51}, multiline=False,text=diz.getAniversario()[3:])
 
         self.labelNomeRua = Label(color='black', size_hint=(.2, .05),
-                                  pos_hint={'center_x': .46, 'center_y': .3},
+                                  pos_hint={'center_x': .46, 'center_y': .44},
                                   text='Nome da rua')
 
         self.textInNome = TextInput(size_hint=(.2, .05),
-                                    pos_hint={'center_x': .7, 'center_y': .3}, multiline=False,text=nome)
+                                    pos_hint={'center_x': .7, 'center_y': .44}, multiline=False,text=diz.getRua())
+        
+        buttonAltera = Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .37},
+                                     text="Alterar",on_press=self.alterarDizimista)
+
+        self.rl.add_widget(labelNome)
+        self.rl.add_widget(self.textNomeDizimista)
+        self.rl.add_widget(labelNumero)
+        self.rl.add_widget(self.textNumeroDizimista)
+        self.rl.add_widget(labelAniversario)
+        self.rl.add_widget(self.textAniversarioDia)
+        self.rl.add_widget(labelBarra)
+        self.rl.add_widget(self.textAniversarioMes)
+        self.rl.add_widget(self.labelNomeRua)
+        self.rl.add_widget(self.textInNome)
+        self.rl.add_widget(buttonAltera)
+
+        self.listaWidget.append(labelNome)
+        self.listaWidget.append(self.textNomeDizimista)
+        self.listaWidget.append(labelNumero)
+        self.listaWidget.append(self.textNumeroDizimista)
+        self.listaWidget.append(labelAniversario)
+        self.listaWidget.append(self.textAniversarioDia)
+        self.listaWidget.append(labelBarra)
+        self.listaWidget.append(self.textAniversarioMes)
+        self.listaWidget.append(self.labelNomeRua)
+        self.listaWidget.append(self.textInNome)
+        self.listaWidget.append(buttonAltera)
+
+    def alterarDizimista(self,obj):
+        self.db.alterarDizimista(['nome','nCasa','aniversario','nRua'],[self.textNomeDizimista.text,self.textNumeroDizimista.text,f"{self.textAniversarioDia.text}/{self.textAniversarioMes.text}",self.textInNome.text],self.dizimistaAltera.getNome(),self.dizimistaAltera.getNCasa(),self.dizimistaAltera.getRua())
+        sucesso = Mensagem(sucesso=True)
+        sucesso.addMensagem("Os dados do dizimista foram alterados com sucesso!",{'center_x': .65, 'center_y': .3})
+        self.rl.add_widget(sucesso)
+        self.listaWidget.append(sucesso)
 
     def limparWidgets(self):
         self.infodiz.limparInfo()
@@ -756,9 +801,9 @@ class searchDizimizta(Screen):
             nome = remvDofim(diz[0])
             nCasa = remvDofim(diz[1])
             nomeRua = remvDofim(diz[2])
-
-            # self.clear_widgets()
-            # self.add_widget(TelaPrincipal(self.user))
+            people = self.db.getDizimista(nome,nomeRua,nCasa)
+            self.clear_widgets()
+            self.add_widget(TelaPrincipal(self.user,typeBloco='alterar',diz=dizimista(people[1],people[4],people[2],people[3])))
     
     def removerDizimista(self,obj):
         selecionado = self.checkBoxes.getNomesAtivos()
