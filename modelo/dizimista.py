@@ -18,6 +18,8 @@ class dizimista:
         return self.nCasa
     
     def getAniversario(self)->str:
+        if len(self.aniversario) == 1:
+            return ""
         return self.aniversario
     
 

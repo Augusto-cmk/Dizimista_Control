@@ -6,7 +6,7 @@ from kivy.uix.checkbox import CheckBox
 from Visao.recursos.mensagem import Mensagem
 from kivy.uix.screenmanager import Screen
 from Data.conexao import test_conexao
-from Visao.recursos.funcoes import remvDofim,verificaIntegridadeSenha,obterIP,checkboxList,checkboxListUniqueMark
+from Visao.recursos.funcoes import typeCorrect,remvDofim,verificaIntegridadeSenha,obterIP,checkboxList,checkboxListUniqueMark
 from Visao.recursos.botoesAuxiliares import Menu
 from Data.send import envioEmail,gerarNumero
 from kivy.uix.image import Image
@@ -583,31 +583,65 @@ class widgetsBloco(Widget):
         numeroDizimista = remvDofim(self.textNumeroDizimista.text)
         diaAniversario = remvDofim(self.textAniversarioDia.text)
         mesAniversario = remvDofim(self.textAniversarioMes.text)
+        tipoDia = typeCorrect(diaAniversario)
+        tipoMes = typeCorrect(mesAniversario)
+        tipoNomeDizimista = typeCorrect(nomeDizimista)
         if self.novaRuaInserida:
             nomeRua = remvDofim(self.textInNome.text)
             nomeZelador = remvDofim(self.textInZelador.text)
             nomeDizimista = remvDofim(self.textNomeDizimista.text)
+            tipoNomeRua = typeCorrect(nomeRua)
+            tipoNomeZelador = typeCorrect(nomeZelador)
 
             if nomeRua == '' or nomeZelador == '':
                 error = Mensagem(error=True)
                 error.addMensagem("Todos os campos da nova rua precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
                 self.rl.add_widget(error)
-                self.widgetsNovo.append(error)
+                self.mensagens.append(error)
                 self.listaWidget.append(error)
             else:
-                if nomeDizimista == '' or numeroDizimista == '' or diaAniversario == '' or mesAniversario == '':
+                if nomeDizimista == '' or numeroDizimista == '':
                     error = Mensagem(error=True)
                     error.addMensagem("Todos os campos do novo dizimista precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
                     self.rl.add_widget(error)
-                    self.widgetsNovo.append(error)
+                    self.mensagens.append(error)
                     self.listaWidget.append(error)
+                
+                elif len(diaAniversario)>2 or len(mesAniversario)>2:
+                    error = Mensagem(error=True)
+                    error.addMensagem("A data inserida é inválida",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+
+                elif tipoNomeDizimista.isInt() or tipoNomeRua.isInt() or tipoNomeZelador.isInt():
+                    error = Mensagem(error=True)
+                    error.addMensagem("Não é possível inserir apenas números nos campos de nome",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+
+                elif (tipoDia.isStr() or tipoMes.isStr()) and (tipoDia.notNull() and tipoMes.notNull()):
+                    error = Mensagem(error=True)
+                    error.addMensagem("Não é possível inserir caracteres como data",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+                
+                elif (tipoDia.notNull() and tipoMes.isNull()) or (tipoMes.notNull() and tipoDia.isNull()):
+                    error = Mensagem(error=True)
+                    error.addMensagem("A data inserida precisa ser preenchida corretamente",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+
                 else:
                     self.db.inserirRua(nomeRua,nomeZelador)
                     self.db.inserirDizimista(nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",nomeRua)
                     sucesso = Mensagem(sucesso=True)
                     sucesso.addMensagem("Dizimista inserido com sucesso!",{'center_x': .65, 'center_y': .1})
                     self.rl.add_widget(sucesso)
-                    self.widgetsNovo.append(sucesso)
+                    self.mensagens.append(sucesso)
                     self.listaWidget.append(sucesso)
         else:
             self.removeWidgetsByList(self.widgetsNovo)
@@ -618,9 +652,36 @@ class widgetsBloco(Widget):
                 self.widgetsNovo.append(error)
                 self.listaWidget.append(error)
             else:
-                if nomeDizimista == '' or numeroDizimista == '' or diaAniversario == '' or mesAniversario == '':
+                if nomeDizimista == '' or numeroDizimista == '':
                     error = Mensagem(error=True)
                     error.addMensagem("Todos os campos do novo dizimista precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.widgetsNovo.append(error)
+                    self.listaWidget.append(error)
+
+                elif len(diaAniversario)>2 or len(mesAniversario)>2:
+                    error = Mensagem(error=True)
+                    error.addMensagem("A data inserida é inválida",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+
+                elif tipoNomeDizimista.isInt():
+                    error = Mensagem(error=True)
+                    error.addMensagem("Não é possível inserir apenas números nos campos de nome",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.widgetsNovo.append(error)
+                    self.listaWidget.append(error)
+                
+                elif (tipoDia.isStr() or tipoMes.isStr()) and (tipoDia.notNull() and tipoMes.notNull()):
+                    error = Mensagem(error=True)
+                    error.addMensagem("Não é possível inserir caracteres como data",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.widgetsNovo.append(error)
+                    self.listaWidget.append(error)
+                elif (tipoDia.notNull() and tipoMes.isNull()) or (tipoMes.notNull() and tipoDia.isNull()):
+                    error = Mensagem(error=True)
+                    error.addMensagem("A data inserida precisa ser preenchida corretamente",{'center_x': .65, 'center_y': .1})
                     self.rl.add_widget(error)
                     self.widgetsNovo.append(error)
                     self.listaWidget.append(error)
@@ -767,11 +828,57 @@ class widgetsBloco(Widget):
         self.listaWidget.append(buttonAltera)
 
     def alterarDizimista(self,obj):
-        self.db.alterarDizimista(['nome','nCasa','aniversario','nRua'],[self.textNomeDizimista.text,self.textNumeroDizimista.text,f"{self.textAniversarioDia.text}/{self.textAniversarioMes.text}",self.textInNome.text],self.dizimistaAltera.getNome(),self.dizimistaAltera.getNCasa(),self.dizimistaAltera.getRua())
-        sucesso = Mensagem(sucesso=True)
-        sucesso.addMensagem("Os dados do dizimista foram alterados com sucesso!",{'center_x': .65, 'center_y': .3})
-        self.rl.add_widget(sucesso)
-        self.listaWidget.append(sucesso)
+        self.removeWidgetsByList(self.mensagens)
+        nomeDizimista = remvDofim(self.textNomeDizimista.text)
+        numeroDizimista = remvDofim(self.textNumeroDizimista.text)
+        diaAniversario = remvDofim(self.textAniversarioDia.text)
+        mesAniversario = remvDofim(self.textAniversarioMes.text)
+        nomeRua = remvDofim(self.textInNome.text)
+        tipoDia = typeCorrect(diaAniversario)
+        tipoMes = typeCorrect(mesAniversario)
+        tipoNomeDizimista = typeCorrect(nomeDizimista)
+        tipoNomeRua = typeCorrect(nomeRua)
+
+        if nomeDizimista == '' or numeroDizimista == '' or nomeRua == '':
+            error = Mensagem(error=True)
+            error.addMensagem("Todos os campos precisam ser preenchidos",{'center_x': .65, 'center_y': .3})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+
+        elif len(diaAniversario)>2 or len(mesAniversario)>2:
+            error = Mensagem(error=True)
+            error.addMensagem("A data inserida é inválida",{'center_x': .65, 'center_y': .1})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+                
+        elif tipoNomeDizimista.isInt() or tipoNomeRua.isInt():
+            error = Mensagem(error=True)
+            error.addMensagem("Não é possível inserir apenas números nos campos de nome",{'center_x': .65, 'center_y': .3})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+
+        elif (tipoDia.isStr() or tipoMes.isStr()) and (tipoDia.notNull() and tipoMes.notNull()):
+            error = Mensagem(error=True)
+            error.addMensagem("Não é possível inserir caracteres como data",{'center_x': .65, 'center_y': .3})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+
+        elif (tipoDia.notNull() and tipoMes.isNull()) or (tipoMes.notNull() and tipoDia.isNull()):
+            error = Mensagem(error=True)
+            error.addMensagem("A data inserida precisa ser preenchida corretamente",{'center_x': .65, 'center_y': .3})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+        else:
+            self.db.alterarDizimista(['nome','nCasa','aniversario','nRua'],[nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",nomeRua],self.dizimistaAltera.getNome(),self.dizimistaAltera.getNCasa(),self.dizimistaAltera.getRua())
+            sucesso = Mensagem(sucesso=True)
+            sucesso.addMensagem("Os dados do dizimista foram alterados com sucesso!",{'center_x': .65, 'center_y': .3})
+            self.rl.add_widget(sucesso)
+            self.listaWidget.append(sucesso)
 
     def limparWidgets(self):
         self.infodiz.limparInfo()
@@ -796,7 +903,6 @@ class searchDizimizta(Screen):
     def alterarDizimista(self,obj):
         selecionado = self.checkBoxes.getNomesAtivos()
         if selecionado != None:
-            print(selecionado)
             diz = selecionado.split('-')
             nome = remvDofim(diz[0])
             nCasa = remvDofim(diz[1])
@@ -825,6 +931,8 @@ class infoDizimista(Widget):
         self.erro = False
     
     def showInfo(self,pos,nomeDizimista:str,numeroCasa:str,dataAniver:str,nomeRua:str):
+        if len(dataAniver) == 1:
+            dataAniver = ''
         labelInit = Label(color='black',size_hint=(.2, .05),
                                pos_hint=pos,
                       text='_____________ informações _____________')

@@ -52,6 +52,7 @@ class checkboxList(list):
         self.pos_x = pos_x
         self.pos_y = pos_y
         self.ativados = list()
+        listaNomes = sorted(listaNomes)
         for nome in listaNomes:
             self.inserir(nome)
 
@@ -85,6 +86,7 @@ class checkboxListUniqueMark(list): #Ao marcar um checkbox, os demais devem ser 
         self.pos_y = pos_y
         self.ativado = None
         self.checkboxActive = [None]
+        listaNomes = sorted(listaNomes)
         for nome in listaNomes:
             self.inserir(nome)
 
@@ -115,3 +117,26 @@ class checkboxListUniqueMark(list): #Ao marcar um checkbox, os demais devem ser 
 
     def getNomesAtivos(self):
         return self.ativado
+
+
+class typeCorrect:
+    def __init__(self,entrada:str)->None:
+        self.entrada = entrada
+    
+    def isInt(self)->bool:
+        try:
+            int(self.entrada)
+            return True
+        except Exception:
+            return False
+
+    def isStr(self)->bool:
+        try:
+            int(self.entrada)
+            return False
+        except Exception:
+            return True
+    def notNull(self)->bool:
+        return self.entrada != ''
+    def isNull(self)->bool:
+        return self.entrada == ''
