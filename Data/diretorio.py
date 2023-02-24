@@ -4,7 +4,11 @@ class controlDiretorio:
         self.dir = os.listdir(diretorioName)
         self.nome = diretorioName
 
+    def __refresh(self):
+        self.dir = os.listdir(self.nome)
+
     def delet(self,fileName:str):
+        self.__refresh()
         arquivo = f"{self.nome}/{fileName}"
         for file in self.dir:
             if file == fileName:

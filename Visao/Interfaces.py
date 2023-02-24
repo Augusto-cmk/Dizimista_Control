@@ -21,6 +21,8 @@ from modelo.dizimista import dizimista
 from modelo.rua import Rua
 from Data.treeSearch import S_tree
 from Visao.recursos.funcoes import Fundo
+from Visao.telaGraph import TelaGraph
+from Data.diretorio import controlDiretorio
 
 
 class TelaLogin(Screen):
@@ -321,6 +323,7 @@ class TelaPrincipal(Screen):
         self.diz = diz
 
 
+        self.ctrDir = controlDiretorio("imagens")
         self.buscaRemovida = False
         self.db = BancodeDados(user.getComunidade())
         self.rl = RelativeLayout(size=(300, 300))
@@ -330,7 +333,9 @@ class TelaPrincipal(Screen):
         
         self.bloco = widgetsBloco(self.rl)
 
-        imagem = Image(source='imagens/fundo-de-formas-abstratas-brancas_79603-1362.avif', pos_hint={'center_x': .5, 'center_y': .5})
+        telaFundo = Fundo(2000,1000,[1,1,1,1])
+
+        imagem = Image(source='imagens/principal.jpg', pos_hint={'center_x': .5, 'center_y': .5})
 
         labelNomeUser = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .18, 'center_y': .96}, text=f'Usuário: {user.getName()}')
@@ -349,16 +354,15 @@ class TelaPrincipal(Screen):
 
         sair = Button(size_hint=(.09, .05),
                         pos_hint={'center_x': .05, 'center_y': 0.96},
-                        text="Sair", on_press=self.sair)
+                        text="Sair", on_press=self.sair,background_color =(1.0, 0.0, 0.0, 1.0))
 
         limparTela = Button(size_hint = (.18,.05),pos_hint={'center_x': .105,'center_y':0.76},text='Tela inicial',on_press=self.limpartela)
-        visualizarDizimistas = Menu('Opções de visualização',{'center_x': .87, 'center_y': 0.76},(.2,.05),
+        self.visualizarDizimistas = Menu('Opções de visualização',{'center_x': .87, 'center_y': 0.76},(.2,.05),
                                     ['Todos os dizimistas','Contribuintes','Não contribuintes'])
-        # Utilizar gráficos demonstrativos para explicar de forma resumida como estão todos os dizimistas em relação a contribuição
 
         ver = Button(size_hint=(.18, .05),
                                       pos_hint={'center_x': .87, 'center_y': 0.61},
-                                      text="Visualizar")
+                                      text="Visualizar",on_press = self.visualizar)
 
         adicionarDizimista = Button(size_hint=(.18, .05),
                                       pos_hint={'center_x': .105, 'center_y': 0.6},
@@ -375,8 +379,15 @@ class TelaPrincipal(Screen):
                                      pos_hint={'center_x': .67, 'center_y': .76},
                                      text="Buscar",on_press=self.marcarBusca)
         
-        self.widgetsBusca = [self.paramBusca,self.searchButton,ver,visualizarDizimistas]
+        self.voltarButton = Button(size_hint=(.09, .05),
+                        pos_hint={'center_x': .05, 'center_y': 0.96},
+                        text="Voltar", on_press=self.goBack)
+        
+        self.widgetsBusca = [self.paramBusca,self.searchButton,ver,self.visualizarDizimistas]
 
+        self.graph = TelaGraph(self.voltarButton)
+
+        self.rl.add_widget(telaFundo)
         self.rl.add_widget(imagem)
         self.rl.add_widget(self.paramBusca)
         self.rl.add_widget(self.searchButton)
@@ -384,7 +395,7 @@ class TelaPrincipal(Screen):
         self.rl.add_widget(ver)
         self.rl.add_widget(marcarContribuintes)
         self.rl.add_widget(adicionarDizimista)
-        self.rl.add_widget(visualizarDizimistas)
+        self.rl.add_widget(self.visualizarDizimistas)
         self.rl.add_widget(dataHoraLogin)
         self.rl.add_widget(labelData)
         self.rl.add_widget(labelHora)
@@ -399,6 +410,36 @@ class TelaPrincipal(Screen):
         
         if self.typeBloco == 'alterar':
             self.telaAltera()
+
+    def visualizar(self,obj):
+        opcao = self.visualizarDizimistas.text.lower()
+        if opcao == "contribuintes":
+            x_values = self.db.ruasDisponiveis()
+            y_values = [len(self.db.ContribuintesRua(getMes(),getAno(),rua)) for rua in x_values]
+            self.graph.insertData(x_values,y_values,opcao)
+            self.rl.clear_widgets()
+            self.add_widget(self.graph)
+
+        elif opcao == "não contribuintes":
+            x_values = self.db.ruasDisponiveis()
+            y_values = [len(self.db.naoContribuintesRua(getMes(),getAno(),rua)) for rua in x_values]
+            self.graph.insertData(x_values,y_values,opcao)
+            self.rl.clear_widgets()
+            self.add_widget(self.graph)
+
+        elif opcao == "todos os dizimistas":
+            x_values = self.db.ruasDisponiveis()
+            y_values = [len(self.db.dizimistasRua(rua)) for rua in x_values]
+            self.graph.insertData(x_values,y_values,opcao)
+            self.rl.clear_widgets()
+            self.add_widget(self.graph)
+    
+    def goBack(self,obj):
+        if len(self.graph.get_namesFig()) > 0:
+            for fig in self.graph.get_namesFig():
+                self.ctrDir.delet(fig)
+        self.clear_widgets()
+        self.add_widget(TelaPrincipal(self.user))
 
     def marcarBusca(self,obj):
         bloco = searchDizimizta(self.user)

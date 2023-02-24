@@ -278,6 +278,35 @@ class BancodeDados:
             ).fetchall())[0])
         return infos
 
+    def ContribuintesRua(self,mes:str,ano:str,nomeRua:str)->list:
+        contribuintes = np.array(transform(self.cmd.execute(
+            """
+                SELECT idDizimista from doacao
+                WHERE mesContribuicao = ? and anoContribuicao = ?;
+            """,(mes,ano,)
+        ).fetchall()))
+
+        dizimistasRua = np.array(transform(self.cmd.execute(
+            """
+                SELECT idDizimista from dizimista
+                WHERE nRua = ?;
+            """,(nomeRua,)
+        ).fetchall()))
+
+        idContribuintes = []
+        for id in dizimistasRua:
+            if id in contribuintes:
+                idContribuintes.append(int(id))
+
+        infos = list()
+        for id in idContribuintes:
+            infos.append(concat(self.cmd.execute(
+                """
+                    SELECT nome from dizimista
+                    WHERE idDizimista = ?;
+                """,(id,)
+            ).fetchall())[0])
+        return infos
 
     def ruasDisponiveis(self)->list:
         return transform(self.cmd.execute(

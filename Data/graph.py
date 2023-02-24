@@ -1,9 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from random import randint
 
 def absolut(percent:float,y_values:list):
     absoluto = int(percent/100.*np.sum(y_values))
     return "{:.1f}%\n({:d})".format(percent,absoluto)
+
+def nomeAleatorio():
+    return str(randint(1,10000000))
 
 
 class Graph:
@@ -21,17 +25,20 @@ class Graph:
         self.filename = f'imagens/{self.nameFig}'
 
     def pizza(self):
-        self.nameFig = "pizza.png"
+        plt.close()
+        self.nameFig = f"{nomeAleatorio()}.png"
         self.__alterFilename()
-        fig,ax1 = plt.subplots(subplot_kw=dict(aspect='equal'))
-        wedgets,_,_ = ax1.pie(self.y,autopct=lambda x: absolut(x,self.y),textprops=dict(color='w'))
-        ax1.legend(wedgets,self.x,loc='center left',bbox_to_anchor=(0.9,0,0.5,1))
+        plt.subplots(subplot_kw=dict(aspect='equal'))
+        wedgets,_,_ = plt.pie(self.y,autopct=lambda x: absolut(x,self.y),textprops=dict(color='w'))
+        plt.legend(wedgets,self.x,loc='center left',bbox_to_anchor=(0.9,0,0.5,1))
         if self.title:
             plt.title(self.title)
-        fig.savefig(self.filename,format='png')
+        plt.gcf().savefig(self.filename,format='png')
+        plt.close()
     
     def barra(self,tipo:str):
-        self.nameFig = "barra.png"
+        plt.close()
+        self.nameFig = f"{nomeAleatorio()}.png"
         self.__alterFilename()
         plt.bar(self.x,self.y,color='blue')
         plt.xticks(self.x)
@@ -40,6 +47,7 @@ class Graph:
         if self.title:
             plt.title(self.title)
         plt.gcf().savefig(self.filename,format='png')
+        plt.close()
 
     def get_filename(self):
         return self.filename

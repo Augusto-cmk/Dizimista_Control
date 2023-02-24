@@ -8,7 +8,7 @@ from Visao.telaGraph import TelaGraph
 class GerenciadorTelas(ScreenManager):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        self.add_widget(TelaGraph(None,['carros','Motos','ônibus','Caminhões'],[40,30,15,20],"Contribuintes"))
+        self.add_widget(TelaLogin())
 
 
 class Programa(App):
