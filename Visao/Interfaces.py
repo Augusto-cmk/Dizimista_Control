@@ -316,11 +316,12 @@ class TelaCadastro(Screen):
 
 
 class TelaPrincipal(Screen):
-    def __init__(self,user:User,typeBloco:str = None,diz:dizimista = None,**kw):
+    def __init__(self,user:User,typeBloco:str = None,diz:dizimista = None,rua:Rua = None,**kw):
         super().__init__(**kw)
         
         self.typeBloco = typeBloco
         self.diz = diz
+        self.rua = rua
 
 
         self.ctrDir = controlDiretorio("imagens")
@@ -331,7 +332,7 @@ class TelaPrincipal(Screen):
         self.user = user
         self.ruaSelecao = None
         
-        self.bloco = widgetsBloco(self.rl)
+        self.bloco = widgetsBloco(self.rl,user)
 
         telaFundo = Fundo(2000,1000,[1,1,1,1])
 
@@ -415,9 +416,36 @@ class TelaPrincipal(Screen):
         
         if self.typeBloco == 'alterar':
             self.telaAltera()
-        
+
+        if self.typeBloco == 'alterar rua':
+            self.telaAlteraRua()
+
+        if self.typeBloco == 'remover rua':
+            self.telaRemoveRua()
+    
+    def telaAlteraRua(self):
+        self.typeBloco = None
+        self.buscaRemovida = True
+        if self.bloco.erro:
+            self.bloco.limparWidgets()
+        self.limparBusca()
+        self.bloco.blocoAlterarRua(self.rua)
+
+    def telaRemoveRua(self):
+        self.typeBloco = None
+        self.buscaRemovida = True
+        if self.bloco.erro:
+            self.bloco.limparWidgets()
+        self.limparBusca()
+        self.bloco.blocoRemoverRua(self.rua)
+
     def configRua(self,obj):
-        pass
+        self.typeBloco = None
+        self.buscaRemovida = True
+        if self.bloco.erro:
+            self.bloco.limparWidgets()
+        self.limparBusca()
+        self.bloco.blocoConfigRua()
 
     def visualizar(self,obj):
         opcao = self.visualizarDizimistas.text.lower()
@@ -462,13 +490,13 @@ class TelaPrincipal(Screen):
         self.buscaRemovida = False
         self.bloco.limparWidgets()
 
-    def telaAltera(self): ## Ao alterar o dizimista tem que ser possível alterar a rua de modo que uma nova rua possa ser criada, para não perder a rua do dizimista
+    def telaAltera(self):
         self.typeBloco = None
         self.buscaRemovida = True
         if self.bloco.erro:
             self.bloco.limparWidgets()
         self.limparBusca()
-        self.bloco.blocoAlterarDizimista(self.user,self.diz)
+        self.bloco.blocoAlterarDizimista(self.diz)
 
     def telaRemove(self):
         self.typeBloco = None
@@ -476,12 +504,12 @@ class TelaPrincipal(Screen):
         if self.bloco.erro:
             self.bloco.limparWidgets()
         self.limparBusca()
-        self.bloco.blocoRemoverDizimista(self.user,self.diz)
+        self.bloco.blocoRemoverDizimista(self.diz)
     
     def telaadd(self,obj):
         self.buscaRemovida = True
         self.limparBusca()
-        self.bloco.blocoAdicionarDizimista(self.user)
+        self.bloco.blocoAdicionarDizimista()
 
     def selecMark(self,obj):
         self.buscaRemovida = True
@@ -520,17 +548,193 @@ class TelaPrincipal(Screen):
 
 
 class widgetsBloco(Widget):
-    def __init__(self,rl:RelativeLayout, **kwargs):
+    def __init__(self,rl:RelativeLayout,user:User, **kwargs):
         super().__init__(**kwargs)
         self.rl = rl
         self.listaWidget = list()
         self.erro = False
         self.infodiz = infoDizimista(self.rl)
         self.mensagens = list()
-
-    def blocoAdicionarDizimista(self,user:User):
-        self.limparWidgets()
         self.db = BancodeDados(user.getComunidade())
+        self.user = user
+
+    def blocoAlterarRua(self,rua:Rua):
+        self.limparWidgets()
+        self.ruaAltera = rua
+        buttonAdd = Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .55},
+                                     text="Alterar",on_press=self.alterarRua)
+
+        labelNomeRua = Label(color='black', size_hint=(.2, .05),
+                                  pos_hint={'center_x': .46, 'center_y': .7},
+                                  text='Nome da rua')
+
+        labelZelador = Label(color='black', size_hint=(.2, .05),
+                                  pos_hint={'center_x': .46, 'center_y': .63},
+                                  text='Nome do zelador')
+
+        self.textInZelador = TextInput(size_hint=(.2, .05),
+                                       pos_hint={'center_x': .7, 'center_y': .63}, multiline=False,text=rua.getZelador())
+
+        self.textNomeRua = TextInput(size_hint=(.2, .05),
+                                    pos_hint={'center_x': .7, 'center_y': .7}, multiline=False,text=rua.getNomeRua())
+
+        self.mensagens = list()
+        
+        self.rl.add_widget(buttonAdd)
+        self.listaWidget.append(buttonAdd)
+        self.rl.add_widget(labelNomeRua)
+        self.listaWidget.append(labelNomeRua)
+        self.rl.add_widget(labelZelador)
+        self.listaWidget.append(labelZelador)
+        self.rl.add_widget(self.textInZelador)
+        self.listaWidget.append(self.textInZelador)
+        self.rl.add_widget(self.textNomeRua)
+        self.listaWidget.append(self.textNomeRua)
+    
+    def alterarRua(self,obj):
+        self.removeWidgetsByList(self.mensagens)
+        nomeRua = remvDofim(self.textNomeRua.text)
+        nomeZelador = remvDofim(self.textInZelador.text)
+        tipoNomeRua = typeCorrect(nomeRua)
+        tipoNomeZelador = typeCorrect(nomeZelador)
+        if nomeRua == '' or nomeZelador == '':
+            error = Mensagem(error=True)
+            error.addMensagem("Todos os campos da nova rua precisam ser preenchidos",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+        
+        elif tipoNomeRua.isInt() or tipoNomeZelador.isInt():
+            error = Mensagem(error=True)
+            error.addMensagem("Os campos não podem ser inteiros",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+        
+        else:
+            if nomeRua == self.ruaAltera.getNomeRua() and nomeZelador == self.ruaAltera.getZelador():
+                erro = Mensagem(error=True)
+                erro.addMensagem("A rua não foi alterado porque os dados não foram alterados!",{'center_x': .65, 'center_y': .5})
+                self.rl.add_widget(erro)
+                self.mensagens.append(erro)
+                self.listaWidget.append(erro)
+            else:
+                self.db.alterarRua(nomeRua,nomeZelador,self.ruaAltera.getNomeRua())
+                sucesso = Mensagem(sucesso=True)
+                sucesso.addMensagem("Rua alterada com sucesso!",{'center_x': .65, 'center_y': .5})
+                self.rl.add_widget(sucesso)
+                self.mensagens.append(sucesso)
+                self.listaWidget.append(sucesso)
+
+    def blocoRemoverRua(self,rua:Rua):
+        pass
+    
+    def blocoConfigRua(self):
+        self.limparWidgets()
+        label = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .67, 'center_y': .7},
+                      text='Escolha uma configuração para realizar')
+
+        AdicionarRua = Button(size_hint=(.2, .05),
+                               pos_hint={'center_x': .55, 'center_y': .5},
+                      text='Adicionar rua',on_press=self.adicionarRua)
+        
+        BuscarRua = Button(size_hint=(.2, .05),
+                               pos_hint={'center_x': .82, 'center_y': .5},
+                      text='Buscar rua',on_press=self.buscarRua)
+
+        self.rl.add_widget(label)
+        self.listaWidget.append(label)
+        self.rl.add_widget(AdicionarRua)
+        self.listaWidget.append(AdicionarRua)
+        self.rl.add_widget(BuscarRua)
+        self.listaWidget.append(BuscarRua)
+
+    def buscarRua(self,obj):
+        self.limparWidgets()
+        self.paramBusca = TextInput(size_hint=(.3, .05),
+                                       pos_hint={'center_x': .65, 'center_y': .55}, multiline=False)
+
+        self.searchButton = Button(size_hint=(.08, .05),
+                                     pos_hint={'center_x': .87, 'center_y': .55},
+                                     text="Buscar",on_press=self.searchRua)
+        
+        self.rl.add_widget(self.paramBusca)
+        self.listaWidget.append(self.paramBusca)
+        self.rl.add_widget(self.searchButton)
+        self.listaWidget.append(self.searchButton)
+    
+    def searchRua(self,obj):
+        bloco = searchRua(self.user)
+        bloco.telaMarcar(0.8, 0.65,self.paramBusca.text)
+        self.rl.clear_widgets()
+        self.rl.add_widget(bloco)
+
+    def adicionarRua(self,obj):
+        self.limparWidgets()
+        buttonAdd = Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .55},
+                                     text="Adicionar",on_press=self.addRua)
+
+        labelNomeRua = Label(color='black', size_hint=(.2, .05),
+                                  pos_hint={'center_x': .46, 'center_y': .7},
+                                  text='Nome da rua')
+
+        labelZelador = Label(color='black', size_hint=(.2, .05),
+                                  pos_hint={'center_x': .46, 'center_y': .63},
+                                  text='Nome do zelador')
+
+        self.textInZelador = TextInput(size_hint=(.2, .05),
+                                       pos_hint={'center_x': .7, 'center_y': .63}, multiline=False)
+
+        self.textNomeRua = TextInput(size_hint=(.2, .05),
+                                    pos_hint={'center_x': .7, 'center_y': .7}, multiline=False)
+
+        self.mensagens = list()
+        
+        self.rl.add_widget(buttonAdd)
+        self.listaWidget.append(buttonAdd)
+        self.rl.add_widget(labelNomeRua)
+        self.listaWidget.append(labelNomeRua)
+        self.rl.add_widget(labelZelador)
+        self.listaWidget.append(labelZelador)
+        self.rl.add_widget(self.textInZelador)
+        self.listaWidget.append(self.textInZelador)
+        self.rl.add_widget(self.textNomeRua)
+        self.listaWidget.append(self.textNomeRua)
+    
+    def addRua(self,obj):
+        self.removeWidgetsByList(self.mensagens)
+        nomeRua = remvDofim(self.textNomeRua.text)
+        nomeZelador = remvDofim(self.textInZelador.text)
+        tipoNomeRua = typeCorrect(nomeRua)
+        tipoNomeZelador = typeCorrect(nomeZelador)
+        if nomeRua == '' or nomeZelador == '':
+            error = Mensagem(error=True)
+            error.addMensagem("Todos os campos da nova rua precisam ser preenchidos",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+        
+        elif tipoNomeRua.isInt() or tipoNomeZelador.isInt():
+            error = Mensagem(error=True)
+            error.addMensagem("Os campos não podem ser inteiros",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
+        
+        else:
+            self.db.inserirRua(nomeRua,nomeZelador)
+            sucesso = Mensagem(sucesso=True)
+            sucesso.addMensagem("Rua inserida com sucesso!",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(sucesso)
+            self.mensagens.append(sucesso)
+            self.listaWidget.append(sucesso)
+
+
+    def blocoAdicionarDizimista(self):
+        self.limparWidgets()
         self.novaRuaInserida = False
         self.ruaSelecao = Menu('Selecione a rua do dizimista', {'center_x': .65, 'center_y': .42}, (.28, .05),self.db.ruasDisponiveis())
         buttonAdd = Button(size_hint=(.18, .05),
@@ -741,10 +945,9 @@ class widgetsBloco(Widget):
 
 
     
-    def blocoRemoverDizimista(self,user:User,diz:dizimista):
+    def blocoRemoverDizimista(self,diz:dizimista):
         self.limparWidgets()
         self.diz = diz
-        self.db = BancodeDados(user.getComunidade())
         self.buttonRemove = Button(size_hint=(.18, .05),
                                      pos_hint={'center_x': .65, 'center_y': .55},
                                      text="Remover",on_press=self.remover)
@@ -798,11 +1001,10 @@ class widgetsBloco(Widget):
             self.novaRuaInserida = False
             self.removeWidgetsByList(self.widgetsNovo)
 
-    def blocoAlterarDizimista(self,user:User,diz:dizimista):
+    def blocoAlterarDizimista(self,diz:dizimista):
         self.limparWidgets()
         self.dizimistaAltera = diz
         self.novaRuaInserida = False
-        self.db = BancodeDados(user.getComunidade())
         self.ruaSelecao = Menu(diz.getRua(), {'center_x': .65, 'center_y': .42}, (.28, .05),self.db.ruasDisponiveis())
         labelNome = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .46, 'center_y': .65},
@@ -1005,6 +1207,36 @@ class widgetsBloco(Widget):
     def limparWidgets(self):
         self.infodiz.limparInfo()
         self.removeWidgetsByList(self.listaWidget)
+
+class searchRua(Screen):
+    def __init__(self,user:User,**kwargs):
+        super().__init__(**kwargs)
+        self.user = user
+        self.db = BancodeDados(self.user.getComunidade())
+        self.tree = S_tree()
+        self.tree.addList(self.db.ruasDisponiveis())
+        self.checkBoxes = None
+
+    def telaMarcar(self,pos_x:int,pos_y:int,param:str):
+        self.alterar = Button(text="Alterar rua",on_press=self.alterarRua)
+        self.remover = Button(text="Remover rua",on_press=self.removerRua)
+        self.checkBoxes = checkboxListUniqueMark(pos_x, pos_y, self.tree.obterCorrespondencias(param))
+        self.add_widget(caixaRolagemBusca(self.alterar,self.remover,self.checkBoxes,self.user))
+
+
+    def alterarRua(self,obj):
+        selecionado = self.checkBoxes.getNomesAtivos()
+        if selecionado != None:
+            rua = self.db.getRua(selecionado)
+            self.clear_widgets()
+            self.add_widget(TelaPrincipal(self.user,typeBloco='alterar rua',rua=Rua(rua[1],rua[2])))
+    
+    def removerRua(self,obj):
+        selecionado = self.checkBoxes.getNomesAtivos()
+        if selecionado != None:
+            rua = self.db.getRua(selecionado)
+            self.clear_widgets()
+            self.add_widget(TelaPrincipal(self.user,typeBloco='remover rua',rua=Rua(rua[1],rua[2])))
 
 class searchDizimizta(Screen):
     def __init__(self,user:User,**kwargs):

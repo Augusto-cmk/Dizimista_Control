@@ -326,6 +326,16 @@ class BancodeDados:
         except IndexError:
             return None
 
+    def getRua(self,nomeRua:str)->tuple:
+        try:
+            return self.cmd.execute(
+                """
+                    SELECT * from rua where nomeRua = ?;
+                """,(nomeRua,)
+            ).fetchall()[0]
+        except IndexError:
+            return None
+
     def __alterarId(self,nomeId:str,novoId:int):
         self.cmd.execute(
             f"""
@@ -342,14 +352,21 @@ class BancodeDados:
         )
         self.conn.commit()
 
-    def alterarRua(self,colunas_alterar:list,novosAtributos:list,nomeRua:str):
+    def alterarRua(self,newName:str,newZelador:str,nomeRua:str):
         try:
-            if len(colunas_alterar) == len(novosAtributos):
-                for i,coluna in enumerate(colunas_alterar):
-                    self.__alterar("rua",coluna,"nomeRua",nomeRua,novosAtributos[i])
-                self.conn.commit()
-                return True
-            return False
+            self.cmd.execute(
+            f"""
+                UPDATE rua set nomeRua = ? where nomeRua = ?;
+            """,(newName,nomeRua,)
+            )
+            self.conn.commit()
+            self.cmd.execute(
+            f"""
+                UPDATE rua set zelador = ? where nomeRua = ?;
+            """,(newZelador,newName,)
+            )
+            self.conn.commit()
+            return True
         except Exception:
             return False
     
