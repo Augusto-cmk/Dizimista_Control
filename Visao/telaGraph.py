@@ -51,11 +51,12 @@ class TelaGraph(Screen):
         self.rl.add_widget(total)
 
     def pizza(self,obj):
-        self.grp.alterTitle(self.title + " - pizza")
-        self.grp.pizza()
-        self.namesFig.append(self.grp.get_nameFig())
-        self.img = Image(source=self.grp.get_filename(),pos_hint={'center_x': .5, 'center_y': .5})
-        self.__refresh()
+        if np.sum(self.grp.y) != 0:
+            self.grp.alterTitle(self.title + " - pizza")
+            self.grp.pizza()
+            self.namesFig.append(self.grp.get_nameFig())
+            self.img = Image(source=self.grp.get_filename(),pos_hint={'center_x': .5, 'center_y': .5})
+            self.__refresh()
     
     def barra(self,obj):
         self.grp.alterTitle(self.title+ " - barra")

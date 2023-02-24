@@ -372,6 +372,10 @@ class TelaPrincipal(Screen):
                                       pos_hint={'center_x': .105, 'center_y': 0.68},
                                       text="Marcar contribuites",on_press=self.selecMark)
 
+        configRua  = Button(size_hint=(.18, .05),
+                                      pos_hint={'center_x': .105, 'center_y': 0.52},
+                                      text="Opções de rua",on_press=self.configRua)
+
         self.paramBusca = TextInput(size_hint=(.3, .05),
                                        pos_hint={'center_x': .47, 'center_y': .76}, multiline=False)
 
@@ -389,6 +393,7 @@ class TelaPrincipal(Screen):
 
         self.rl.add_widget(telaFundo)
         self.rl.add_widget(imagem)
+        self.rl.add_widget(configRua)
         self.rl.add_widget(self.paramBusca)
         self.rl.add_widget(self.searchButton)
         self.rl.add_widget(limparTela)
@@ -410,6 +415,9 @@ class TelaPrincipal(Screen):
         
         if self.typeBloco == 'alterar':
             self.telaAltera()
+        
+    def configRua(self,obj):
+        pass
 
     def visualizar(self,obj):
         opcao = self.visualizarDizimistas.text.lower()
@@ -454,7 +462,7 @@ class TelaPrincipal(Screen):
         self.buscaRemovida = False
         self.bloco.limparWidgets()
 
-    def telaAltera(self):
+    def telaAltera(self): ## Ao alterar o dizimista tem que ser possível alterar a rua de modo que uma nova rua possa ser criada, para não perder a rua do dizimista
         self.typeBloco = None
         self.buscaRemovida = True
         if self.bloco.erro:
@@ -790,10 +798,12 @@ class widgetsBloco(Widget):
             self.novaRuaInserida = False
             self.removeWidgetsByList(self.widgetsNovo)
 
-    def blocoAlterarDizimista(self,user:User,diz:dizimista): ## Tem que terminar o bloco de alterar dizimista
+    def blocoAlterarDizimista(self,user:User,diz:dizimista):
         self.limparWidgets()
         self.dizimistaAltera = diz
+        self.novaRuaInserida = False
         self.db = BancodeDados(user.getComunidade())
+        self.ruaSelecao = Menu(diz.getRua(), {'center_x': .65, 'center_y': .42}, (.28, .05),self.db.ruasDisponiveis())
         labelNome = Label(color='black',size_hint=(.2, .05),
                                pos_hint={'center_x': .46, 'center_y': .65},
                       text='Nome do dizimista')
@@ -823,39 +833,57 @@ class widgetsBloco(Widget):
         self.textAniversarioMes = TextInput(size_hint=(.04, .045),
                                          pos_hint={'center_x': .679, 'center_y': .51}, multiline=False,text=diz.getAniversario()[3:])
 
+        box = CheckBox(color='black',size_hint=(.1, .1), pos_hint={'center_x': .47, 'center_y': .42})
+        box.bind(active=self.novaRua)
+
+        nova = Label(color='black', size_hint=(.2, .05),
+                                 pos_hint={'center_x': .4, 'center_y': .42},
+                                 text='Nova rua')
+
         self.labelNomeRua = Label(color='black', size_hint=(.2, .05),
-                                  pos_hint={'center_x': .46, 'center_y': .44},
+                                  pos_hint={'center_x': .46, 'center_y': .3},
                                   text='Nome da rua')
 
         self.textInNome = TextInput(size_hint=(.2, .05),
-                                    pos_hint={'center_x': .7, 'center_y': .44}, multiline=False,text=diz.getRua())
+                                    pos_hint={'center_x': .7, 'center_y': .3}, multiline=False)
+
+        self.labelZelador = Label(color='black', size_hint=(.2, .05),
+                                  pos_hint={'center_x': .46, 'center_y': .23},
+                                  text='Nome do zelador')
+
+        self.textInZelador = TextInput(size_hint=(.2, .05),
+                                       pos_hint={'center_x': .7, 'center_y': .23}, multiline=False)
         
         buttonAltera = Button(size_hint=(.18, .05),
-                                     pos_hint={'center_x': .65, 'center_y': .37},
+                                     pos_hint={'center_x': .65, 'center_y': .15},
                                      text="Alterar",on_press=self.alterarDizimista)
 
-        self.rl.add_widget(labelNome)
-        self.rl.add_widget(self.textNomeDizimista)
-        self.rl.add_widget(labelNumero)
-        self.rl.add_widget(self.textNumeroDizimista)
-        self.rl.add_widget(labelAniversario)
-        self.rl.add_widget(self.textAniversarioDia)
-        self.rl.add_widget(labelBarra)
-        self.rl.add_widget(self.textAniversarioMes)
-        self.rl.add_widget(self.labelNomeRua)
-        self.rl.add_widget(self.textInNome)
-        self.rl.add_widget(buttonAltera)
+        self.widgetsNovo = [self.labelNomeRua, self.textInNome, self.textInZelador, self.labelZelador]
 
+        self.rl.add_widget(labelNome)
         self.listaWidget.append(labelNome)
-        self.listaWidget.append(self.textNomeDizimista)
+        self.rl.add_widget(labelNumero)
         self.listaWidget.append(labelNumero)
-        self.listaWidget.append(self.textNumeroDizimista)
+        self.rl.add_widget(labelAniversario)
         self.listaWidget.append(labelAniversario)
+        self.rl.add_widget(box)
+        self.listaWidget.append(box)
+        self.rl.add_widget(nova)
+        self.listaWidget.append(nova)
+
+        self.rl.add_widget(self.textNomeDizimista)
+        self.listaWidget.append(self.textNomeDizimista)
+        self.rl.add_widget(self.textNumeroDizimista)
+        self.listaWidget.append(self.textNumeroDizimista)
+        self.rl.add_widget(self.ruaSelecao)
+        self.listaWidget.append(self.ruaSelecao)
+        self.rl.add_widget(self.textAniversarioDia)
         self.listaWidget.append(self.textAniversarioDia)
-        self.listaWidget.append(labelBarra)
+        self.rl.add_widget(self.textAniversarioMes)
         self.listaWidget.append(self.textAniversarioMes)
-        self.listaWidget.append(self.labelNomeRua)
-        self.listaWidget.append(self.textInNome)
+        self.rl.add_widget(labelBarra)
+        self.listaWidget.append(labelBarra)
+        self.rl.add_widget(buttonAltera)
         self.listaWidget.append(buttonAltera)
 
     def alterarDizimista(self,obj):
@@ -864,52 +892,115 @@ class widgetsBloco(Widget):
         numeroDizimista = remvDofim(self.textNumeroDizimista.text)
         diaAniversario = remvDofim(self.textAniversarioDia.text)
         mesAniversario = remvDofim(self.textAniversarioMes.text)
-        nomeRua = remvDofim(self.textInNome.text)
         tipoDia = typeCorrect(diaAniversario)
         tipoMes = typeCorrect(mesAniversario)
         tipoNomeDizimista = typeCorrect(nomeDizimista)
-        tipoNomeRua = typeCorrect(nomeRua)
+        if self.novaRuaInserida:
+            nomeRua = remvDofim(self.textInNome.text)
+            nomeZelador = remvDofim(self.textInZelador.text)
+            nomeDizimista = remvDofim(self.textNomeDizimista.text)
+            tipoNomeRua = typeCorrect(nomeRua)
+            tipoNomeZelador = typeCorrect(nomeZelador)
 
-        if nomeDizimista == '' or numeroDizimista == '' or nomeRua == '':
-            error = Mensagem(error=True)
-            error.addMensagem("Todos os campos precisam ser preenchidos",{'center_x': .65, 'center_y': .3})
-            self.rl.add_widget(error)
-            self.mensagens.append(error)
-            self.listaWidget.append(error)
-
-        elif len(diaAniversario)>2 or len(mesAniversario)>2:
-            error = Mensagem(error=True)
-            error.addMensagem("A data inserida é inválida",{'center_x': .65, 'center_y': .1})
-            self.rl.add_widget(error)
-            self.mensagens.append(error)
-            self.listaWidget.append(error)
+            if nomeRua == '' or nomeZelador == '':
+                error = Mensagem(error=True)
+                error.addMensagem("Todos os campos da nova rua precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.mensagens.append(error)
+                self.listaWidget.append(error)
+            else:
+                if nomeDizimista == '' or numeroDizimista == '':
+                    error = Mensagem(error=True)
+                    error.addMensagem("Todos os campos do dizimista precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
                 
-        elif tipoNomeDizimista.isInt() or tipoNomeRua.isInt():
-            error = Mensagem(error=True)
-            error.addMensagem("Não é possível inserir apenas números nos campos de nome",{'center_x': .65, 'center_y': .3})
-            self.rl.add_widget(error)
-            self.mensagens.append(error)
-            self.listaWidget.append(error)
+                elif len(diaAniversario)>2 or len(mesAniversario)>2:
+                    error = Mensagem(error=True)
+                    error.addMensagem("A data inserida é inválida",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
 
-        elif (tipoDia.isStr() or tipoMes.isStr()) and (tipoDia.notNull() and tipoMes.notNull()):
-            error = Mensagem(error=True)
-            error.addMensagem("Não é possível inserir caracteres como data",{'center_x': .65, 'center_y': .3})
-            self.rl.add_widget(error)
-            self.mensagens.append(error)
-            self.listaWidget.append(error)
+                elif tipoNomeDizimista.isInt() or tipoNomeRua.isInt() or tipoNomeZelador.isInt():
+                    error = Mensagem(error=True)
+                    error.addMensagem("Não é possível inserir apenas números nos campos de nome",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
 
-        elif (tipoDia.notNull() and tipoMes.isNull()) or (tipoMes.notNull() and tipoDia.isNull()):
-            error = Mensagem(error=True)
-            error.addMensagem("A data inserida precisa ser preenchida corretamente",{'center_x': .65, 'center_y': .3})
-            self.rl.add_widget(error)
-            self.mensagens.append(error)
-            self.listaWidget.append(error)
+                elif (tipoDia.isStr() or tipoMes.isStr()) and (tipoDia.notNull() and tipoMes.notNull()):
+                    error = Mensagem(error=True)
+                    error.addMensagem("Não é possível inserir caracteres como data",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+                
+                elif (tipoDia.notNull() and tipoMes.isNull()) or (tipoMes.notNull() and tipoDia.isNull()):
+                    error = Mensagem(error=True)
+                    error.addMensagem("A data inserida precisa ser preenchida corretamente",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(error)
+                    self.mensagens.append(error)
+                    self.listaWidget.append(error)
+
+                else:
+                    self.db.inserirRua(nomeRua,nomeZelador)
+                    self.db.alterarDizimista(['nome','nCasa','aniversario','nRua'],[nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",nomeRua],self.dizimistaAltera.getNome(),self.dizimistaAltera.getNCasa(),self.dizimistaAltera.getRua())
+                    sucesso = Mensagem(sucesso=True)
+                    sucesso.addMensagem("Os dados do dizimista foram alterados com sucesso!",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(sucesso)
+                    self.listaWidget.append(sucesso)
         else:
-            self.db.alterarDizimista(['nome','nCasa','aniversario','nRua'],[nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",nomeRua],self.dizimistaAltera.getNome(),self.dizimistaAltera.getNCasa(),self.dizimistaAltera.getRua())
-            sucesso = Mensagem(sucesso=True)
-            sucesso.addMensagem("Os dados do dizimista foram alterados com sucesso!",{'center_x': .65, 'center_y': .3})
-            self.rl.add_widget(sucesso)
-            self.listaWidget.append(sucesso)
+            self.removeWidgetsByList(self.widgetsNovo)
+            if nomeDizimista == '' or numeroDizimista == '':
+                error = Mensagem(error=True)
+                error.addMensagem("Todos os campos do dizimista precisam ser preenchidos",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+
+            elif len(diaAniversario)>2 or len(mesAniversario)>2:
+                error = Mensagem(error=True)
+                error.addMensagem("A data inserida é inválida",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.mensagens.append(error)
+                self.listaWidget.append(error)
+
+            elif tipoNomeDizimista.isInt():
+                error = Mensagem(error=True)
+                error.addMensagem("Não é possível inserir apenas números nos campos de nome",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+            
+            elif (tipoDia.isStr() or tipoMes.isStr()) and (tipoDia.notNull() and tipoMes.notNull()):
+                error = Mensagem(error=True)
+                error.addMensagem("Não é possível inserir caracteres como data",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+            elif (tipoDia.notNull() and tipoMes.isNull()) or (tipoMes.notNull() and tipoDia.isNull()):
+                error = Mensagem(error=True)
+                error.addMensagem("A data inserida precisa ser preenchida corretamente",{'center_x': .65, 'center_y': .1})
+                self.rl.add_widget(error)
+                self.widgetsNovo.append(error)
+                self.listaWidget.append(error)
+            else:
+                resposta = self.db.getDizimista(nomeDizimista,self.ruaSelecao.text,numeroDizimista)
+                if resposta:
+                    erro = Mensagem(error=True)
+                    erro.addMensagem("Dizimista não foi alterado porque os novos dados percentem a outro dizimista!",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(erro)
+                    self.mensagens.append(erro)
+                    self.listaWidget.append(erro)
+                else:
+                    self.db.alterarDizimista(['nome','nCasa','aniversario','nRua'],[nomeDizimista,numeroDizimista,f"{diaAniversario}/{mesAniversario}",self.ruaSelecao.text],self.dizimistaAltera.getNome(),self.dizimistaAltera.getNCasa(),self.dizimistaAltera.getRua())
+                    sucesso = Mensagem(sucesso=True)
+                    sucesso.addMensagem("Os dados do dizimista foram alterados com sucesso!",{'center_x': .65, 'center_y': .1})
+                    self.rl.add_widget(sucesso)
+                    self.listaWidget.append(sucesso)
+
 
     def limparWidgets(self):
         self.infodiz.limparInfo()

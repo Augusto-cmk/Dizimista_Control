@@ -440,4 +440,4 @@ class BancodeDados_cadastro:
 
 
 # teste = BancodeDados("Comunidade")
-# teste.criar()
+# print(teste.getDizimista("asdas","asdasd","asdasd"))
