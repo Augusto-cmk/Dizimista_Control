@@ -38,6 +38,8 @@ class TelaGraph(Screen): ## Selecionar a rua, clicar em visualizar e depois most
 
         self.menuAno = Menu(getAno(), {'center_x': .92, 'center_y': 0.96}, (.15, .05),self.db.anosDisponiveis())
 
+        self.labelsTotal = list()
+
         self.namesFig = list()
         self.img = None
         self.showed = False
@@ -51,6 +53,11 @@ class TelaGraph(Screen): ## Selecionar a rua, clicar em visualizar e depois most
 
     
     def __refresh(self):
+        if len(self.get_namesFig()) > 0:
+            for fig in self.get_namesFig():
+                self.ctrDir.delet(fig)
+        
+        self.namesFig = list()
         self.showed = True
         self.rl.add_widget(self.img)
     
@@ -59,14 +66,37 @@ class TelaGraph(Screen): ## Selecionar a rua, clicar em visualizar e depois most
         self.namesFig = list()
         self.totalDizimistas = len(self.db.dizimistasRua(rua))
 
+        totalContribui = np.sum([len(self.db.ContribuintesRua(getMes(),getAno(),r)) for r in self.db.ruasDisponiveis()])
+        self.qtdDizimistas = len(self.db.dizimistasAll())
+
         self.title = f"Contribuintes X Não contribuintes ({rua})"
         total = Label(color='black',size_hint=(.2, .05),
-                               pos_hint={'center_x': .25, 'center_y': .96}, text=f'Total de dizimistas: {self.totalDizimistas}')
+                               pos_hint={'center_x': .25, 'center_y': .96}, text=f'Total de dizimistas da rua: {self.totalDizimistas}')
+        
+        self.totalContribuintes = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .12, 'center_y': .91}, text=f'Total de contribuintes: {totalContribui}')
+        
+        self.totalNaoContribuintes = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .86, 'center_y': .91}, text=f'Total de não contribuintes: {abs(self.qtdDizimistas - totalContribui)}')
+        
         self.rl.add_widget(total)
+        self.labelsTotal.append(self.totalContribuintes)
+        self.labelsTotal.append(self.totalNaoContribuintes)
+        self.rl.add_widget(self.totalContribuintes)
+        self.rl.add_widget(self.totalNaoContribuintes)
 
     def pizza(self,obj):
+        self.__limparTotal()
         contribuintes = len(self.db.ContribuintesRua(self.menuMes.text,self.menuAno.text,self.rua))
         y_values = [contribuintes,abs(self.totalDizimistas - contribuintes)]
+
+
+        totalContribui = np.sum([len(self.db.ContribuintesRua(self.menuMes.text,self.menuAno.text,r)) for r in self.db.ruasDisponiveis()])
+        self.totalContribuintes.text = f'Total de contribuintes: {totalContribui}'
+        self.totalNaoContribuintes.text = f'Total de não contribuintes: {abs(self.qtdDizimistas - totalContribui)}'
+
+        self.rl.add_widget(self.totalContribuintes)
+        self.rl.add_widget(self.totalNaoContribuintes)
 
         self.grp = Graph(self.x_values,y_values)
 
@@ -80,8 +110,18 @@ class TelaGraph(Screen): ## Selecionar a rua, clicar em visualizar e depois most
             self.__refresh()
     
     def barra(self,obj):
+        self.__limparTotal()
+
+
         contribuintes = len(self.db.ContribuintesRua(self.menuMes.text,self.menuAno.text,self.rua))
         y_values = [contribuintes,abs(self.totalDizimistas - contribuintes)]
+
+        totalContribui = np.sum([len(self.db.ContribuintesRua(self.menuMes.text,self.menuAno.text,r)) for r in self.db.ruasDisponiveis()])
+        self.totalContribuintes.text = f'Total de contribuintes: {totalContribui}'
+        self.totalNaoContribuintes.text = f'Total de não contribuintes: {abs(self.qtdDizimistas - totalContribui)}'
+
+        self.rl.add_widget(self.totalContribuintes)
+        self.rl.add_widget(self.totalNaoContribuintes)
 
         self.grp = Graph(self.x_values,y_values)
 
@@ -95,3 +135,7 @@ class TelaGraph(Screen): ## Selecionar a rua, clicar em visualizar e depois most
     
     def get_namesFig(self):
         return self.namesFig
+
+    def __limparTotal(self):
+        for widget in self.labelsTotal:
+            self.rl.remove_widget(widget)

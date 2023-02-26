@@ -454,9 +454,6 @@ class TelaPrincipal(Screen):
         self.add_widget(self.graph)
     
     def goBack(self,obj):
-        if len(self.graph.get_namesFig()) > 0:
-            for fig in self.graph.get_namesFig():
-                self.ctrDir.delet(fig)
         self.clear_widgets()
         self.add_widget(TelaPrincipal(self.user))
 
