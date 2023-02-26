@@ -28,7 +28,7 @@ class Graph:
         plt.close()
         self.nameFig = f"{nomeAleatorio()}.png"
         self.__alterFilename()
-        plt.subplots(figsize=(10, 5),subplot_kw=dict(aspect='equal'))
+        plt.subplots(subplot_kw=dict(aspect='equal'))
         wedgets,_,_ = plt.pie(self.y,autopct=lambda x: absolut(x,self.y),textprops=dict(color='w'))
         plt.legend(wedgets,self.x,loc='center left',bbox_to_anchor=(0.9,0,0.5,1),fontsize=10)
         if self.title:
@@ -40,7 +40,6 @@ class Graph:
         plt.close()
         self.nameFig = f"{nomeAleatorio()}.png"
         self.__alterFilename()
-        plt.figure(figsize=(15, 7))
         plt.bar(self.x,self.y,color='blue')
         plt.xticks(self.x)
         plt.ylabel("Quantidade")

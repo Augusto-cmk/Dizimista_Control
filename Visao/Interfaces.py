@@ -358,8 +358,8 @@ class TelaPrincipal(Screen):
                         text="Sair", on_press=self.sair,background_color =(1.0, 0.0, 0.0, 1.0))
 
         limparTela = Button(size_hint = (.18,.05),pos_hint={'center_x': .105,'center_y':0.76},text='Tela inicial',on_press=self.limpartela)
-        self.visualizarDizimistas = Menu('Opções de visualização',{'center_x': .87, 'center_y': 0.76},(.2,.05),
-                                    ['Todos os dizimistas','Contribuintes','Não contribuintes'])
+        self.visualizarDizimistas = Menu('Opções de visualização',{'center_x': .87, 'center_y': 0.76},(.25,.05),
+                                    self.db.ruasDisponiveis())
 
         ver = Button(size_hint=(.18, .05),
                                       pos_hint={'center_x': .87, 'center_y': 0.61},
@@ -448,9 +448,8 @@ class TelaPrincipal(Screen):
         self.bloco.blocoConfigRua()
 
     def visualizar(self,obj):
-        opcao = self.visualizarDizimistas.text.lower()
-        x_values = self.db.ruasDisponiveis()
-        self.graph.insertData(x_values,opcao)
+        rua = self.visualizarDizimistas.text
+        self.graph.insertData(rua)
         self.rl.clear_widgets()
         self.add_widget(self.graph)
     
