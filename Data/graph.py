@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from random import randint
 
-def absolut(percent:float,y_values:list):
-    absoluto = int(percent/100.*np.sum(y_values))
-    return "{:.1f}%\n({:d})".format(percent,absoluto)
+def absolut(percent:float):
+    return "{:.1f}%".format(percent)
 
 def nomeAleatorio():
     return str(randint(1,10000000))
@@ -29,7 +28,7 @@ class Graph:
         self.nameFig = f"{nomeAleatorio()}.png"
         self.__alterFilename()
         plt.subplots(subplot_kw=dict(aspect='equal'))
-        wedgets,_,_ = plt.pie(self.y,autopct=lambda x: absolut(x,self.y),textprops=dict(color='w'))
+        wedgets,_,_ = plt.pie(self.y,autopct=lambda x: absolut(x),textprops=dict(color='w'))
         plt.legend(wedgets,self.x,loc='center left',bbox_to_anchor=(0.9,0,0.5,1),fontsize=10)
         if self.title:
             plt.title(self.title)
