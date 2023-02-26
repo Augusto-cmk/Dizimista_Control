@@ -10,9 +10,10 @@ def getData():
     return data.strftime('%d/%m/%Y')
 
 def getMes():
+    meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
     data = datetime.now()
-    return data.month
+    return meses[data.month-1]
 
 def getAno():
     data = datetime.now()
-    return data.year
+    return str(data.year)

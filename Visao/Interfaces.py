@@ -390,7 +390,7 @@ class TelaPrincipal(Screen):
         
         self.widgetsBusca = [self.paramBusca,self.searchButton,ver,self.visualizarDizimistas]
 
-        self.graph = TelaGraph(self.voltarButton)
+        self.graph = TelaGraph(self.voltarButton,self.user)
 
         self.rl.add_widget(telaFundo)
         self.rl.add_widget(imagem)
@@ -449,26 +449,10 @@ class TelaPrincipal(Screen):
 
     def visualizar(self,obj):
         opcao = self.visualizarDizimistas.text.lower()
-        if opcao == "contribuintes":
-            x_values = self.db.ruasDisponiveis()
-            y_values = [len(self.db.ContribuintesRua(getMes(),getAno(),rua)) for rua in x_values]
-            self.graph.insertData(x_values,y_values,opcao)
-            self.rl.clear_widgets()
-            self.add_widget(self.graph)
-
-        elif opcao == "não contribuintes":
-            x_values = self.db.ruasDisponiveis()
-            y_values = [len(self.db.naoContribuintesRua(getMes(),getAno(),rua)) for rua in x_values]
-            self.graph.insertData(x_values,y_values,opcao)
-            self.rl.clear_widgets()
-            self.add_widget(self.graph)
-
-        elif opcao == "todos os dizimistas":
-            x_values = self.db.ruasDisponiveis()
-            y_values = [len(self.db.dizimistasRua(rua)) for rua in x_values]
-            self.graph.insertData(x_values,y_values,opcao)
-            self.rl.clear_widgets()
-            self.add_widget(self.graph)
+        x_values = self.db.ruasDisponiveis()
+        self.graph.insertData(x_values,opcao)
+        self.rl.clear_widgets()
+        self.add_widget(self.graph)
     
     def goBack(self,obj):
         if len(self.graph.get_namesFig()) > 0:
@@ -628,7 +612,51 @@ class widgetsBloco(Widget):
                 self.listaWidget.append(sucesso)
 
     def blocoRemoverRua(self,rua:Rua):
-        pass
+        self.limparWidgets()
+        self.mensagens = list()
+        self.rua = rua
+        self.buttonRemove = Button(size_hint=(.18, .05),
+                                     pos_hint={'center_x': .65, 'center_y': .55},
+                                     text="Remover",on_press=self.removerRua)
+
+        labelInit = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .65, 'center_y': .76},
+                      text='_____________ informações _____________')
+        
+        labelNome = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .65, 'center_y':.72},
+                      text=f'Nome rua: {self.rua.getNomeRua()}')
+        
+        labelZelador = Label(color='black',size_hint=(.2, .05),
+                               pos_hint={'center_x': .65, 'center_y':.68},
+                      text=f'Nome zelador: {self.rua.getZelador()}')
+        
+
+        self.rl.add_widget(labelInit)
+        self.listaWidget.append(labelInit)
+        self.rl.add_widget(labelNome)
+        self.listaWidget.append(labelNome)
+        self.rl.add_widget(labelZelador)
+        self.listaWidget.append(labelZelador)
+        self.rl.add_widget(self.buttonRemove)
+        self.listaWidget.append(self.buttonRemove)
+    
+    def removerRua(self,obj):
+        self.removeWidgetsByList(self.mensagens)
+        dizimistasRua = self.db.dizimistasRua(self.rua.getNomeRua())
+        if len(dizimistasRua) == 0:
+            self.db.removerRua(self.rua.getNomeRua())
+            sucesso = Mensagem(sucesso=True)
+            sucesso.addMensagem("Rua removida com sucesso!",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(sucesso)
+            self.mensagens.append(sucesso)
+            self.listaWidget.append(sucesso)
+        else:
+            error = Mensagem(error=True)
+            error.addMensagem("Ainda existem dizimistas nesta rua e por isso não pode ser removida",{'center_x': .65, 'center_y': .5})
+            self.rl.add_widget(error)
+            self.mensagens.append(error)
+            self.listaWidget.append(error)
     
     def blocoConfigRua(self):
         self.limparWidgets()

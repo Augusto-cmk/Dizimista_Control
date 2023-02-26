@@ -109,6 +109,14 @@ class BancodeDados:
                 """,(0,0,0,255,)
         )
         self.conn.commit()
+    
+    def anosDisponiveis(self) ->list:
+        return list(set(transform(self.cmd.execute(
+            """
+                SELECT anoContribuicao from doacao;
+            """
+        ).fetchall())))
+
     def marcarContribuinte(self,nomeDizimista:str,nomeRua:str,nCasa:str,mesContribuido:str,anoContribuicao:str)->bool:
         try:
             idDizimista = self.__getIdDizimista(nomeDizimista,nCasa,nomeRua)
