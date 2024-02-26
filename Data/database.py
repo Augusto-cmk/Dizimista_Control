@@ -462,7 +462,3 @@ class BancodeDados_cadastro:
             return None
         info = info[0]
         return User(info[0],info[1])
-
-
-# teste = BancodeDados("Comunidade")
-# print(teste.getDizimista("asdas","asdasd","asdasd"))
