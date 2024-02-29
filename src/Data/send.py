@@ -40,7 +40,7 @@ def envioEmail(destino,assunto,mensagem,tipo):
         msg['Subject'] = assunto
         msg['From'] = 'dizimistasadm@gmail.com'
         msg['To'] = destino
-        password = '97394144amintas'
+        password = 'ghwabhhapqdgpuxk'
         msg.add_header('Content-Type','text/html')
         msg.set_payload(corpo_do_email)
 

@@ -3,46 +3,53 @@ from threading import Thread
 from Comunication.mensagem import *
 import queue
 import sys
-import time
+from src.controle.cadastro import Cadastro
+from src.Data.send import envioEmail
 
 class LogicalServer: # Serve para realizar a ação requisitada pelo usuário, ao acessar a posição ele realiza a operação
     def __init__(self) -> None:
         self.actions = {"cadastro":self.__cadastro,
-                        "alterar dados usuário":self.__alterar_dados_usuario,
                         "login":self.__login,
-                        "password":self.__password
+                        "senha":self.__password
                         }
     def get(self,key:str,msg:dict):
         return self.actions[key](msg)
 
     def __cadastro(self,msg:dict):
+        controleCadastro = Cadastro()
+        email = msg['email']
+        nome = msg['nome']
+        login = msg['login']
+        senha = msg['senha']
+        comunidade = msg['comunidade']
         try:
-            # Realizar o cadasttro do cliente
-            return True
+            return controleCadastro.cadastrar(email,nome,login,senha,comunidade)
         except Exception:
             return False
     
     def __password(self,msg:dict):
+        controleCadastro = Cadastro()
         email = msg['email']
-        password = None # Obser senha do usuário
-        return password
+        try:
+            senha = controleCadastro.recuperaSenha(email)
+            envioEmail(email,"Recuperação de Senha",senha,"senha")
+            return True
+        except Exception:
+            return False
 
     def __login(self,msg:dict):
-        email = msg['email']
-        senha = msg['password']
+        controleCadastro = Cadastro()
+        login = msg['login']
+        senha = msg['senha']
         try:
-            # Obter os dados a serem retornados para efetuar o login
-            return {}
-        except Exception:
+            return controleCadastro.login(login,senha)
+        except Exception as e:
+            print(f"[ERROR] Falha {e} ao tentar efetuar login")
             return None
-
-    def __alterar_dados_usuario(self,msg:dict):
-        perfil_atualizado = None
-        return perfil_atualizado
 
 class Server:
     def __init__(self) -> None:
-        self.ip = "192.168.3.11"
+        self.ip = "0.0.0.0"
         self.porta = 4045
         self.address = (self.ip, self.porta)
         self.servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,19 +72,12 @@ class Server:
         while True:
             retorno_servidor = None
             addr, msg = self.mensagens.get()
-            # Realizar o tratamento da mensagem
             try:
                 path = msg['route']
                 retorno_servidor = self.ServerAction.get(path,msg)
-                # ------------------------------
-                # Depois, mandar a mensagem para o cliente
+                retorno_servidor = {"msg":retorno_servidor}
                 msg_serialized = serialize(retorno_servidor)
-                self.conexoes[addr].send(serialize({"size_buffer": sys.getsizeof(msg_serialized)}))
-
-                fragmentos = fragment_msg(msg_serialized, 4096)
-                time.sleep(0.1)
-                for fragmento in fragmentos:
-                    self.conexoes[addr].send(fragmento)
+                self.conexoes[addr].send(msg_serialized)
             except KeyError:
                 print("[INFO] Erro de chave, mensagem mal interpretada no servidor")
 
@@ -94,7 +94,7 @@ class Server:
                     else:
                         buffer += data
                         if sys.getsizeof(buffer) >= expected_size:
-                            msg = deserialize(buffer)  # Recebe a classe enviada pelo cliente (Obs: O servidor deve conhecer a estrutura da classe)
+                            msg = deserialize(buffer)
                             self.conexoes[addr] = conn
                             self.mensagens.put((addr, msg))
                             expected_size = sys.maxsize
@@ -104,8 +104,8 @@ class Server:
                     print(f"[INFO] Cliente {addr} desconectou")
                     break
 
-            except Exception:
-                print(f"[INFO] Cliente {addr} desconectou")
+            except Exception as e:
+                print(f"[ERRO] {e}")
                 break
 
 

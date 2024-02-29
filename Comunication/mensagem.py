@@ -1,11 +1,11 @@
-import pickle
+import json
 
 def serialize(classe:object):
-    serialized_data = pickle.dumps(classe)
-    return serialized_data
+    serialized_data = json.dumps(classe)
+    return serialized_data.encode()
     
 def deserialize(serialized_data):
-    classe = pickle.loads(serialized_data)
+    classe = json.loads(serialized_data)
     return classe
 
 def fragment_msg(mensagem,size_required):

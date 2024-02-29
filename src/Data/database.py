@@ -1,6 +1,6 @@
 import sqlite3
 import numpy as np
-from Data.user import User
+from src.Data.user import User
 # consulta = http://pythonclub.com.br/gerenciando-banco-dados-sqlite3-python-parte1.html
 # Dados = https://docs.google.com/spreadsheets/d/1_HBwd5AdT7gH_P5IoNFRyOkfJZmTLLPD/edit#gid=11936601
 
@@ -425,6 +425,7 @@ class BancodeDados_cadastro:
         self.cmd.execute(
             """
             CREATE TABLE IF NOT EXISTS cadastro (
+                    email varchar(100),
                     login varchar(100),
                     senha varchar(100),
                     nome varchar(100) not null,
@@ -434,7 +435,7 @@ class BancodeDados_cadastro:
         )
         self.conn.commit()
 
-    def inserirCadastro(self,login:str,senha:str,nome:str,nomeComunidade:str)->bool:
+    def inserirCadastro(self,email,login:str,senha:str,nome:str,nomeComunidade:str)->bool:
         cadastros = transform(self.cmd.execute(
             """
                 SELECT login from cadastro where login = ?;
@@ -443,9 +444,9 @@ class BancodeDados_cadastro:
         if login not in cadastros:
             self.cmd.execute(
                 """
-                    INSERT INTO cadastro (login,senha,nome,nomeComunidade)
-                    values(?,?,?,?);
-                """,(login,senha,nome,nomeComunidade,)
+                    INSERT INTO cadastro (email,login,senha,nome,nomeComunidade)
+                    values(?,?,?,?,?);
+                """,(email,login,senha,nome,nomeComunidade,)
             )
             self.conn.commit()
             return True
@@ -454,11 +455,18 @@ class BancodeDados_cadastro:
     def login(self,login:str,senha:str)->User:
         info =  self.cmd.execute(
             """
-                SELECT nome,nomeComunidade from cadastro where
+                SELECT nome,nomeComunidade,email,login,senha from cadastro where
                 login = ? and senha = ?;
             """,(login,senha,)
         ).fetchall()
         if len(info) == 0:
             return None
         info = info[0]
-        return User(info[0],info[1])
+        return User(info[0],info[1],info[2],info[3],info[4])
+
+    def recuperar_senha(self,email:str):
+        return self.cmd.execute(
+            """
+                SELECT senha from cadastro where email = ?;
+            """,(email,)
+        ).fetchall()[0][0]
