@@ -5,8 +5,9 @@ import queue
 import sys
 from src.controle.cadastro import Cadastro
 from src.Data.send import envioEmail
+from Log.Logger import LOGGER
 
-class LogicalServer: # Serve para realizar a ação requisitada pelo usuário, ao acessar a posição ele realiza a operação
+class LogicalServer:
     def __init__(self) -> None:
         self.actions = {"cadastro":self.__cadastro,
                         "login":self.__login,
@@ -24,7 +25,8 @@ class LogicalServer: # Serve para realizar a ação requisitada pelo usuário, a
         comunidade = msg['comunidade']
         try:
             return controleCadastro.cadastrar(email,nome,login,senha,comunidade)
-        except Exception:
+        except Exception as e:
+            LOGGER("servidor").inserirLOG("__cadastro",str(e),"ERROR")
             return False
     
     def __password(self,msg:dict):
@@ -34,7 +36,8 @@ class LogicalServer: # Serve para realizar a ação requisitada pelo usuário, a
             senha = controleCadastro.recuperaSenha(email)
             envioEmail(email,"Recuperação de Senha",senha,"senha")
             return True
-        except Exception:
+        except Exception as e:
+            LOGGER("servidor").inserirLOG("__password",str(e),"ERROR")
             return False
 
     def __login(self,msg:dict):
@@ -44,7 +47,7 @@ class LogicalServer: # Serve para realizar a ação requisitada pelo usuário, a
         try:
             return controleCadastro.login(login,senha)
         except Exception as e:
-            print(f"[ERROR] Falha {e} ao tentar efetuar login")
+            LOGGER("servidor").inserirLOG("__login",str(e),"ERROR")
             return None
 
 class Server:
@@ -79,7 +82,7 @@ class Server:
                 msg_serialized = serialize(retorno_servidor)
                 self.conexoes[addr].send(msg_serialized)
             except KeyError:
-                print("[INFO] Erro de chave, mensagem mal interpretada no servidor")
+                LOGGER("servidor").inserirLOG("__server_to_client","Erro de chave, mensagem mal interpretada no servidor","INFO")
 
     def __clients_to_server(self, conn, addr):
         print(f"Um novo usuário se conectou pelo endereço = {addr}")
@@ -101,10 +104,12 @@ class Server:
                             buffer = b""
                 
                 else:
+                    LOGGER("servidor").inserirLOG("__clients_to_server",f"[INFO] Cliente {addr} desconectou","INFO")
                     print(f"[INFO] Cliente {addr} desconectou")
                     break
 
             except Exception as e:
+                LOGGER("servidor").inserirLOG("__clients_to_server",str(e),"ERROR")
                 print(f"[ERRO] {e}")
                 break
 
